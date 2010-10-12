@@ -13,17 +13,23 @@
 -export([draw/0, get_choice/0]).
 
 draw() ->
-    cecho:curs_set(?ceCURS_INVISIBLE),
+    
+    %cecho:curs_set(?ceCURS_INVISIBLE),
     cecho:move(0,0),
-    cecho:addstr("Countdown: "),
+    %cecho:addstr("Countdown: "),
     cecho:refresh(),
-    cecho:curs_set(?ceCURS_NORMAL),
-    %Win = cecho:newwin(20,20,0,0),
-    %cecho:waddstr(Win, "Rofl"),
-    %cecho:wborder(Win, "|", "|", "-", "-", "+", "+", "+", "+"),
-    %timer:sleep(2000),
+
+    cecho:curs_set(?ceCURS_INVISIBLE),
+    Win = cecho:newwin(20,20,0,0),
+    cecho:move(1,2),
+    cecho:waddstr(Win, "Rofl"),
+    cecho:wborder(Win, $|, $|, $-, $-, $+, $+, $+, $+),
+    cecho:refresh(),
+    cecho:wrefresh(Win),
+   % cecho:box(Win, 20, 20),
     %application:stop(cecho),
     %halt().a
+    cecho:curs_set(?ceCURS_NORMAL),
     ok.
 
 
