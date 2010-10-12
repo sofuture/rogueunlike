@@ -35,9 +35,23 @@ stop(_) ->
 
 go() ->
     init(),
+
+    cecho:cbreak(),
+    
     MenuItems = menu_items(),
-    _Menu = rogueunlike_menu:draw(MenuItems),
+    OtherItems = other_items(),
+
+    Menu1 = rogueunlike_menu:draw(MenuItems),
     timer:sleep(5000),
+    cecho:delwin(Menu1),
+    cecho:refresh(),
+    cecho:wrefresh(Menu1),
+
+    Menu2 = rogueunlike_menu:draw(OtherItems),
+    timer:sleep(5000),
+    cecho:delwin(Menu2),
+    cecho:refresh(),
+
     die().
 
 die() ->
@@ -53,9 +67,12 @@ init() ->
     ok.
 
 menu_items() ->
-     [{1, "Choose Something"},
-         {2, "Please"},
-         {3, "Something else ineffective"},
-         {4, "Exit"}].
+    [{1, "Choose Something"},
+        {2, "Please"},
+        {3, "Something else ineffective"},
+        {4, "Exit"}].
 
+other_items() ->
+    [{1, "BüNayiramdaqu Dumdadu Arad Ulus"},
+        {2, "Juzur al Qamar . Jumh.r.yat al Qamar al Mutta.idah"}].
 

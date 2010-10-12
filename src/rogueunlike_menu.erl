@@ -16,6 +16,8 @@
 
 -export([draw/1, get_choice/0]).
 
+-define(WINDOW_BORDERS, $|, $|, $-, $-, $+, $+, $+, $+).
+
 %% ============================================================================
 %% Application API
 %% ============================================================================
@@ -28,7 +30,8 @@ draw(MenuItems) ->
 
     %% create our window
     Win = cecho:newwin(MenuHeight, MenuWidth, StartY, StartX),
-    cecho:wborder(Win, $|, $|, $-, $-, $+, $+, $+, $+),
+    cecho:wborder(Win, ?WINDOW_BORDERS),
+    %cecho:wborder(Win, $|, $|, $-, $-, $+, $+, $+, $+),
     cecho:wrefresh(Win),
 
     %% print some diagnostics

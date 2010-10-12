@@ -17,6 +17,7 @@
 // Includes
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include "cecho.h"
 #include "cecho_commands.h"
 #include "erl_driver.h"
@@ -38,6 +39,7 @@ typedef struct {
 
 void init_state(state *st, char *args, int argslen);
 void ok(state *st);
+void sigwinch(state *st);
 void error_tuple(state *st, int code);
 void boolean(state *st, int code);
 
@@ -495,6 +497,13 @@ void do_keypad(state *st) {
 // =============================================================================
 // Utility functions
 // =============================================================================
+state *stpt;
+
+void handle_winch(int sig){
+  signal(SIGWINCH, handle_winch);
+  sigwinch(stpt);
+}
+
 void init_state(state *st, char *args, int argslen) {
   st->index = 0;
   st->version = 0;
@@ -503,11 +512,18 @@ void init_state(state *st, char *args, int argslen) {
   ei_decode_version(st->args, &(st->index), &(st->version));
   assert(st->version != 0);
   assert(st->index != 0);
+  stpt = st;
   ei_x_new_with_version(&(st->eixb));
+  signal(SIGWINCH, handle_winch);
 }
 
 void ok(state *st) {
   atom(&(st->eixb), "ok", 2);
+}
+
+void sigwinch(state *st) {
+  atom(&(st->eixb), "sigwinch", 8);
+  do_refresh(st);
 }
 
 void error_tuple(state *st, int code) {
