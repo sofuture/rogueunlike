@@ -18,8 +18,11 @@ go() ->
     init(),
     rogueunlike_menu:draw(),
     Choice = rogueunlike_menu:get_choice(),
+    cecho:move(5,5),
+    cecho:addstr(Choice),
+    cecho:refresh(),
+    timer:sleep(2000),
     die().
-    
 
 
 init() ->

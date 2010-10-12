@@ -13,23 +13,23 @@
 -export([draw/0, get_choice/0]).
 
 draw() ->
-    
-    %cecho:curs_set(?ceCURS_INVISIBLE),
-    cecho:move(0,0),
-    %cecho:addstr("Countdown: "),
-    cecho:refresh(),
-
+    {MX,MY} = cecho:getmaxyx(),
+    MenuWidth = menu_text_width(),
+    MenuHeight = menu_text_height(),
     cecho:curs_set(?ceCURS_INVISIBLE),
-    Win = cecho:newwin(20,20,0,0),
-    cecho:move(1,2),
-    cecho:waddstr(Win, "Rofl"),
+    
+    Win = cecho:newwin(MX,MY,0,0),
     cecho:wborder(Win, $|, $|, $-, $-, $+, $+, $+, $+),
-    cecho:refresh(),
     cecho:wrefresh(Win),
-   % cecho:box(Win, 20, 20),
-    %application:stop(cecho),
-    %halt().a
+
+    cecho:move(1,1),
+    cecho:addstr(io_lib:format("Menu width: ~p height: ~p",
+            [MenuWidth, MenuHeight])),
+    cecho:move(2,1),
+    cecho:addstr("Welp!: "),
+    cecho:refresh(),
     cecho:curs_set(?ceCURS_NORMAL),
+
     ok.
 
 
@@ -43,14 +43,37 @@ getline() ->
 
 getline(Buffer) ->
     case cecho:getch() of 
-        $\n -> Buffer;
-        NextChar -> getline(Buffer ++ [NextChar])
+        $\n -> lists:reverse(Buffer);
+        NextChar -> getline([NextChar | Buffer])
     end.
 
 %% get menu choice
 
 get_choice() ->
     getline().
+
+%maxlen([], Max) -> Max;
+%maxlen([Head|Rest], Max) ->
+%    {_N, Name} = Head,
+%    case length(Name) > Max of
+%        true -> maxlen(Rest, length(Name));
+%        false -> maxlen(Rest, Max)
+%    end.
+
+menu_text_height() ->
+    length(menu_items()).
+
+menu_text_width() ->
+    Items = menu_items(),
+    MaxLen = fun(Elem, Max) ->
+        {_N, Text} = Elem,
+        LenText = length(Text),
+        case LenText > Max of
+            true -> LenText;
+            false -> Max
+        end
+    end,
+    lists:foldl(MaxLen, 0, Items).
 
 %% get menu items
 
