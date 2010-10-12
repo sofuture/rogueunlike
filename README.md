@@ -1,3 +1,3 @@
 rogueunlike
 =====
-entirely not exactly unlike a rogue
+entirely not exactly (but sort of) unlike a rogue
