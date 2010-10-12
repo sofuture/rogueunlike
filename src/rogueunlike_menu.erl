@@ -8,30 +8,45 @@
 
 -module(rogueunlike_menu).
 
+-author("Jeff Zellner <jeff.zellner@gmail.com>").
+
 -include("cecho.hrl").
 
 -export([draw/0, get_choice/0]).
 
 draw() ->
-    {MX,MY} = cecho:getmaxyx(),
-    MenuWidth = menu_text_width(),
-    MenuHeight = menu_text_height(),
     cecho:curs_set(?ceCURS_INVISIBLE),
+
+    %% do some math to size our window
+    {MY, MX} = cecho:getmaxyx(),
+    MenuWidth = menu_text_width() + 2,
+    MenuHeight = menu_text_height() + 2,
+    StartX = (MX - MenuWidth) div 2,
+    StartY = (MY - MenuHeight) div 2,
     
-    Win = cecho:newwin(MX,MY,0,0),
+    %% create our window
+    Win = cecho:newwin(MenuHeight, MenuWidth, StartY, StartX),
     cecho:wborder(Win, $|, $|, $-, $-, $+, $+, $+, $+),
     cecho:wrefresh(Win),
 
-    cecho:move(1,1),
-    cecho:addstr(io_lib:format("Menu width: ~p height: ~p",
-            [MenuWidth, MenuHeight])),
-    cecho:move(2,1),
-    cecho:addstr("Welp!: "),
+    %% print some diagnostics
+    cecho:move(0,1),
+    cecho:addstr(io_lib:format("Window (~p,~p) Menu (~p,~p) Start(~p,~p)",
+            [MX,MY,MenuWidth, MenuHeight, StartX, StartY])),
+
+    %% print the menu items
+    Print = fun(Elem) ->
+        {N, Text} = Elem,
+        ItemStr = io_lib:format("~p - ~s", [N, Text]),
+        cecho:mvwaddstr(Win, N, 1, ItemStr)
+    end,
+    lists:foreach(Print, menu_items()),
+    cecho:wrefresh(Win),
     cecho:refresh(),
+
+    %% clean up
     cecho:curs_set(?ceCURS_NORMAL),
-
-    ok.
-
+    Win.
 
 %% read input until newline
 
@@ -52,22 +67,14 @@ getline(Buffer) ->
 get_choice() ->
     getline().
 
-%maxlen([], Max) -> Max;
-%maxlen([Head|Rest], Max) ->
-%    {_N, Name} = Head,
-%    case length(Name) > Max of
-%        true -> maxlen(Rest, length(Name));
-%        false -> maxlen(Rest, Max)
-%    end.
-
 menu_text_height() ->
     length(menu_items()).
 
 menu_text_width() ->
     Items = menu_items(),
     MaxLen = fun(Elem, Max) ->
-        {_N, Text} = Elem,
-        LenText = length(Text),
+        {N, Text} = Elem,
+        LenText = length(Text) + 3 + (N div 10) + 1,
         case LenText > Max of
             true -> LenText;
             false -> Max

@@ -16,19 +16,19 @@
 
 go() ->
     init(),
-    rogueunlike_menu:draw(),
-    Choice = rogueunlike_menu:get_choice(),
-    cecho:move(5,5),
-    cecho:addstr(Choice),
+    Menu = rogueunlike_menu:draw(),
+
+    %Choice = rogueunlike_menu:get_choice(),
+    %cecho:move(5,5),
+    %cecho:addstr(Choice),
+
     cecho:refresh(),
     timer:sleep(2000),
     die().
 
-
 init() ->
     application:start(cecho),
     ok.
-
 
 die() ->
     application:stop(cecho),
