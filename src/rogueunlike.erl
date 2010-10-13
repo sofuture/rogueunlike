@@ -35,8 +35,26 @@ stop(_) ->
 
 go() ->
     init(),
+    cecho:move(0,0),
 
+    case rogueunlike_level:load_level("level") of
+    {ok, #level{id=LId, data=LData} = Level} ->
+        cecho:addstr(io_lib:format("loaded level (~s)", [LId])),
+        cecho:move(1,1),
+        cecho:addstr(io_lib:format("level is ~p x ~p",
+            [rogueunlike_level:level_width(Level),
+                rogueunlike_level:level_height(Level)])),
+        rogueunlike_level:draw_level(Level);
+    {error, _} ->
+        cecho:addstr("something borked loading level")
+    end,
+
+    cecho:refresh(),
     cecho:cbreak(),
+    timer:sleep(5000),
+    die().
+
+unused() ->
     
     MenuItems = menu_items(),
     OtherItems = other_items(),
