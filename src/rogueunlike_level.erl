@@ -20,7 +20,7 @@
 %% Application API
 %% ============================================================================
 
-draw_level(Level) ->
+draw_level(_Level) ->
     ok.
 
 load_level(LevelName) ->

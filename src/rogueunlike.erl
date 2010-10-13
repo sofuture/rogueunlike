@@ -38,7 +38,7 @@ go() ->
     cecho:move(0,0),
 
     case rogueunlike_level:load_level("level") of
-    {ok, #level{id=LId, data=LData} = Level} ->
+    {ok, #level{id=LId} = Level} ->
         cecho:addstr(io_lib:format("loaded level (~s)", [LId])),
         cecho:move(1,1),
         cecho:addstr(io_lib:format("level is ~p x ~p",
@@ -52,25 +52,27 @@ go() ->
     cecho:refresh(),
     cecho:cbreak(),
     timer:sleep(5000),
+
+    cecho:erase(),
+    cecho:refresh(),
+    menu_test(),
+
     die().
 
-unused() ->
+menu_test() ->
     
     MenuItems = menu_items(),
     OtherItems = other_items(),
 
     Menu1 = rogueunlike_menu:draw(MenuItems),
     timer:sleep(5000),
-    cecho:delwin(Menu1),
+    cecho:werase(Menu1),
     cecho:refresh(),
-    cecho:wrefresh(Menu1),
 
     Menu2 = rogueunlike_menu:draw(OtherItems),
     timer:sleep(5000),
-    cecho:delwin(Menu2),
-    cecho:refresh(),
-
-    die().
+    cecho:werase(Menu2),
+    cecho:refresh().
 
 die() ->
     application:stop(rogueunlike),
