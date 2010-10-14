@@ -31,7 +31,6 @@ draw(MenuItems) ->
     %% create our window
     Win = cecho:newwin(MenuHeight, MenuWidth, StartY, StartX),
     cecho:wborder(Win, ?WINDOW_BORDERS),
-    %cecho:wborder(Win, $|, $|, $-, $-, $+, $+, $+, $+),
     cecho:wrefresh(Win),
 
     %% print some diagnostics
@@ -65,11 +64,9 @@ get_choice() ->
 %% compute required menu dimensions
 
 menu_coords(MenuItems) ->
-    {MaxY, MaxX} = cecho:getmaxyx(),
     MenuWidth = menu_width(MenuItems),
     MenuHeight = menu_height(MenuItems),
-    StartX = (MaxX - MenuWidth) div 2,
-    StartY = (MaxY - MenuHeight) div 2,
+    {StartX, StartY} = rogueunlike_util:centering_coords(MenuWidth, MenuHeight),
     {MenuHeight, MenuWidth, StartY, StartX}.
 
 menu_height(Items) ->

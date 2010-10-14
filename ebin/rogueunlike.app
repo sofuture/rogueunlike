@@ -11,7 +11,8 @@
 
     %% modules
     rogueunlike_level,
-    rogueunlike_menu
+    rogueunlike_menu,
+    rogueunlike_util
     ]},
   {env, []},
   {mod, {rogueunlike, []}}]}.
