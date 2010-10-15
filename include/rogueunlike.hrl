@@ -3,3 +3,4 @@
 
 -record(level, {id, data}).
 
+-define(WINDOW_BORDERS, $|, $|, $-, $-, $+, $+, $+, $+).
