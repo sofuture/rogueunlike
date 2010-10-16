@@ -76,12 +76,17 @@ draw(MenuItems) ->
 get_choice() ->
     cecho:getline().
 
+%% ============================================================================
+%% Internal Functions
+%% ============================================================================
+
 create_console(Height) ->
     cecho:curs_set(?ceCURS_INVISIBLE),
     {MaxY, MaxX} = cecho:getmaxyx(),
     Win = cecho:newwin(Height+1, MaxX, MaxY-(Height+1), 0),
     cecho:wborder(Win, ?CONSOLE_BORDERS),
-    cecho:wmove(Win, 1,0),
+    cecho:wmove(Win, 0, 3),
+    cecho:waddstr(Win, " Messages "),
     cecho:wrefresh(Win),
     Win.
 
@@ -108,13 +113,6 @@ clear_console(#console_state{
     cecho:waddstr(Win, ClearStr),
     cecho:wmove(Win, 2, 0),
     cecho:waddstr(Win, ClearStr).
-
-
-%% ============================================================================
-%% Internal Functions
-%% ============================================================================
-
-%% compute required menu dimensions
 
 menu_coords(MenuItems) ->
     MenuWidth = menu_width(MenuItems),

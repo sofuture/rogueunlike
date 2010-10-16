@@ -36,10 +36,8 @@ stop(_) ->
 go() ->
     init(),
     start_systems(),
-    timer:sleep(1000),
 
     console ! {create, 2},
-    timer:sleep(2000),
 
     console ! {msg, "You are in a dark maze of twisty passages, all of them alike."},
     timer:sleep(2000),
@@ -66,16 +64,9 @@ init() ->
 
 start_systems() ->
     true = register(console, 
-        spawn(rogueunlike_menu, console_loop, [#console_state{}])).
+        spawn(rogueunlike_menu, console_loop, [#console_state{}])),
+    true = register(char,
+        spawn(rogueunlike_char, char_loop, [#cstats{}])),
+    ok.
 
-
-menu_items() ->
-    [{1, "Choose Something"},
-        {2, "Please"},
-        {3, "Something else ineffective"},
-        {4, "Exit"}].
-
-other_items() ->
-    [{1, "BüNayiramdaqu Dumdadu Arad Ulus"},
-        {2, "Juzur al Qamar . Jumh.r.yat al Qamar al Mutta.idah"}].
 
