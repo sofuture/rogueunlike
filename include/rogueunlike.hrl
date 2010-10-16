@@ -3,7 +3,7 @@
 
 -record(level, {id, data}).
 
--record(console_state, {win, lines, height}).
+-record(console_state, {win = nil, lines = [], height = 0, width = 0}).
 
 -define(WINDOW_BORDERS, $|, $|, $-, $-, $+, $+, $+, $+).
 

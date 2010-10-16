@@ -41,7 +41,13 @@ go() ->
     console ! {create, 2},
     timer:sleep(2000),
 
-    console ! {create, 4},
+    console ! {msg, "You are in a dark maze of twisty passages, all of them alike."},
+    timer:sleep(2000),
+
+    console ! {msg, "You hear a noise."},
+    timer:sleep(2000),
+    
+    console ! {msg, "It is pitch black. You are likely to be eaten by a grue."},
     timer:sleep(2000),
 
     die().
@@ -60,7 +66,7 @@ init() ->
 
 start_systems() ->
     true = register(console, 
-        spawn(rogueunlike_menu, console_loop, [nil])).
+        spawn(rogueunlike_menu, console_loop, [#console_state{}])).
 
 
 menu_items() ->

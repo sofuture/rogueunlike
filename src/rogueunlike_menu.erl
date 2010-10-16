@@ -14,7 +14,7 @@
 -include("cecho.hrl").
 -include("rogueunlike.hrl").
 
--export([draw/1, get_choice/0, create_console/1, console_loop/1]).
+-export([draw/1, get_choice/0, console_loop/1]).
 
 %% ============================================================================
 %% Application API
@@ -24,10 +24,19 @@ console_loop(Cons) ->
     receive
         {create, Height} ->
             Win = create_console(Height),
-            console_loop(#console_state{
-                    win = Win, lines = [], height = Height});
+            {_, MaxX} = cecho:getmaxyx(),
+            console_loop(Cons#console_state{
+                    win = Win, lines = [], height = Height, width = MaxX});
+
+        {msg, Text} ->
+            NextCons = Cons#console_state{
+                    lines = [Text | Cons#console_state.lines]},
+            draw_console(NextCons),
+            console_loop(NextCons);
+
         {exit, _} -> 
             ok;
+
         _ -> 
             console_loop(Cons)
     end.
@@ -70,14 +79,36 @@ get_choice() ->
 create_console(Height) ->
     cecho:curs_set(?ceCURS_INVISIBLE),
     {MaxY, MaxX} = cecho:getmaxyx(),
-
     Win = cecho:newwin(Height+1, MaxX, MaxY-(Height+1), 0),
     cecho:wborder(Win, ?CONSOLE_BORDERS),
-    cecho:wrefresh(Win),
-
     cecho:wmove(Win, 1,0),
-    cecho:waddstr(Win, "this is the console window"),
+    cecho:wrefresh(Win),
     Win.
+
+draw_console(#console_state{lines = Lines,
+        win = Win, height = _Height, width = _Width} = Cons) ->
+    [Last | Rest] = Lines,
+    clear_console(Cons),    
+    cecho:wmove(Win, 2, 0),
+    cecho:waddstr(Win, Last),
+    case Rest of
+        [Last2 | _] ->
+            cecho:wmove(Win, 1, 0),
+            cecho:waddstr(Win, Last2);
+        [] -> ok
+    end,
+    cecho:wrefresh(Win),
+    Cons.
+
+clear_console(#console_state{
+        win = Win, height = _Height, width = Width} = _Cons) ->
+    FStr = "~" ++ integer_to_list(Width) ++ "c",
+    ClearStr = io_lib:format(FStr,[$\s]),
+    cecho:wmove(Win, 1, 0),
+    cecho:waddstr(Win, ClearStr),
+    cecho:wmove(Win, 2, 0),
+    cecho:waddstr(Win, ClearStr).
+
 
 %% ============================================================================
 %% Internal Functions
