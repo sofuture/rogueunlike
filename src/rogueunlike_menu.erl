@@ -14,11 +14,23 @@
 -include("cecho.hrl").
 -include("rogueunlike.hrl").
 
--export([draw/1, get_choice/0, create_console/0]).
+-export([draw/1, get_choice/0, create_console/1, console_loop/1]).
 
 %% ============================================================================
 %% Application API
 %% ============================================================================
+
+console_loop(Cons) ->
+    receive
+        {create, Height} ->
+            Win = create_console(Height),
+            console_loop(#console_state{
+                    win = Win, lines = [], height = Height});
+        {exit, _} -> 
+            ok;
+        _ -> 
+            console_loop(Cons)
+    end.
 
 draw(MenuItems) ->
     cecho:curs_set(?ceCURS_INVISIBLE),
@@ -55,11 +67,11 @@ draw(MenuItems) ->
 get_choice() ->
     cecho:getline().
 
-create_console() ->
+create_console(Height) ->
     cecho:curs_set(?ceCURS_INVISIBLE),
     {MaxY, MaxX} = cecho:getmaxyx(),
 
-    Win = cecho:newwin(3, MaxX, MaxY-3, 0),
+    Win = cecho:newwin(Height+1, MaxX, MaxY-(Height+1), 0),
     cecho:wborder(Win, ?CONSOLE_BORDERS),
     cecho:wrefresh(Win),
 

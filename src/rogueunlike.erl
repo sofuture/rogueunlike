@@ -35,46 +35,16 @@ stop(_) ->
 
 go() ->
     init(),
-    cecho:move(0,0),
+    start_systems(),
+    timer:sleep(1000),
 
-    case rogueunlike_level:load_level("level") of
-    {ok, #level{id=LId} = Level} ->
-        cecho:addstr(io_lib:format("loaded level (~s)", [LId])),
-        cecho:move(1,1),
-        cecho:addstr(io_lib:format("level is ~p x ~p",
-            [rogueunlike_level:level_width(Level),
-                rogueunlike_level:level_height(Level)])),
-        rogueunlike_level:draw_level(Level);
-    {error, _} ->
-        cecho:addstr("something borked loading level")
-    end,
+    console ! {create, 2},
+    timer:sleep(2000),
 
-    rogueunlike_menu:create_console(),
-
-    cecho:refresh(),
-    cecho:cbreak(),
-    timer:sleep(5000),
-
-    cecho:erase(),
-    cecho:refresh(),
-    menu_test(),
+    console ! {create, 4},
+    timer:sleep(2000),
 
     die().
-
-menu_test() ->
-    
-    MenuItems = menu_items(),
-    OtherItems = other_items(),
-
-    Menu1 = rogueunlike_menu:draw(MenuItems),
-    timer:sleep(5000),
-    cecho:werase(Menu1),
-    cecho:refresh(),
-
-    Menu2 = rogueunlike_menu:draw(OtherItems),
-    timer:sleep(5000),
-    cecho:werase(Menu2),
-    cecho:refresh().
 
 die() ->
     application:stop(rogueunlike),
@@ -87,6 +57,11 @@ die() ->
 init() ->
     application:start(rogueunlike),
     ok.
+
+start_systems() ->
+    true = register(console, 
+        spawn(rogueunlike_menu, console_loop, [nil])).
+
 
 menu_items() ->
     [{1, "Choose Something"},
