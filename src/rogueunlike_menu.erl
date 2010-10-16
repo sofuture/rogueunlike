@@ -14,7 +14,7 @@
 -include("cecho.hrl").
 -include("rogueunlike.hrl").
 
--export([draw/1, get_choice/0]).
+-export([draw/1, get_choice/0, create_console/0]).
 
 %% ============================================================================
 %% Application API
@@ -54,6 +54,18 @@ draw(MenuItems) ->
 
 get_choice() ->
     cecho:getline().
+
+create_console() ->
+    cecho:curs_set(?ceCURS_INVISIBLE),
+    {MaxY, MaxX} = cecho:getmaxyx(),
+
+    Win = cecho:newwin(3, MaxX, MaxY-3, 0),
+    cecho:wborder(Win, ?CONSOLE_BORDERS),
+    cecho:wrefresh(Win),
+
+    cecho:wmove(Win, 1,0),
+    cecho:waddstr(Win, "this is the console window"),
+    Win.
 
 %% ============================================================================
 %% Internal Functions

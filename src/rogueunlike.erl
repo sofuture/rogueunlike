@@ -49,6 +49,8 @@ go() ->
         cecho:addstr("something borked loading level")
     end,
 
+    rogueunlike_menu:create_console(),
+
     cecho:refresh(),
     cecho:cbreak(),
     timer:sleep(5000),
