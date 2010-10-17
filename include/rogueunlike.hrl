@@ -15,6 +15,8 @@
 
 -record(cstats, {
         name = "",
+        gender = nil,
+        race = nil,
         level = 0,
         gold = 0,
         hp = 0,
@@ -22,6 +24,15 @@
         ac = 0,
         turns = 0,
         cattributes = #cattributes{}}).
+
+-define(CSTAT_LINE(Char),
+        Name = Char#cstats.name,
+        Race = Char#cstats.race,
+        Level = Char#cstats.level,
+        Hp = Char#cstats.hp,
+        HpMax = Char#cstats.hpmax,
+        Format = "~s the ~s (Lvl ~p) HP: ~p/~p",
+        io_lib:format(Format, [Name, Race, Level, Hp, HpMax])).
 
 -define(WINDOW_BORDERS, $|, $|, $-, $-, $+, $+, $+, $+).
 
