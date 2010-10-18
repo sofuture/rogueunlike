@@ -16,9 +16,7 @@
 -include("rogueunlike.hrl").
 
 -export([start/2,stop/1]).
-
 -export([go/0,die/0]).
-
 -export([test_loop/1]).
 
 %% ============================================================================
@@ -35,6 +33,32 @@ stop(_) ->
 %% Module API
 %% ============================================================================
 
+go() ->
+    init(),
+    start_systems(),
+
+    %% create console
+    console ! {create, 2},
+    
+    %% set up input for running script
+    input ! {mode, {rogueunlike_input, script_mode}},
+
+    %% run the script engine
+    true = register(script, spawn(?MODULE, test_loop, [test_script(test_char())])),
+
+    wait_for_death().
+
+die() ->
+    console ! {exit, die},
+    char ! {exit, die},
+    input ! {exit, die},
+    application:stop(rogueunlike),
+    halt().
+
+%% ============================================================================
+%% Test Functions
+%% ============================================================================
+
 test_char() ->
     #cstats{
         name = "Groflehanger",
@@ -45,17 +69,6 @@ test_char() ->
         hp = 500,
         hpmax = 500,
         ac = -234}.
-
-go() ->
-    init(),
-    start_systems(),
-
-    console ! {create, 2},
-    Char = test_char(),
-
-    true = register(logic, spawn(?MODULE, test_loop, [test_script(Char)])),
-
-    suicide().
 
 test_loop(Steps) ->
     receive
@@ -110,23 +123,17 @@ test_script(Char) ->
     ],
     Actions.
 
-die() ->
-    console ! {exit, die},
-    char ! {exit, die},
-    input ! {exit, die},
-    application:stop(rogueunlike),
-    halt().
 
 %% ============================================================================
 %% Internal Functions
 %% ============================================================================
 
-suicide() ->
+wait_for_death() ->
     receive
         {exit, _} ->
             die();
         _ -> 
-            suicide()
+            wait_for_death()
     end.
 
 init() ->
@@ -134,12 +141,17 @@ init() ->
     ok.
 
 start_systems() ->
+
     true = register(console, 
         spawn(rogueunlike_menu, console_loop, [#console_state{}])),
+
     true = register(char,
         spawn(rogueunlike_char, char_loop, [#cstats{}])),
+
     true = register(input,
         spawn(rogueunlike_input, input_loop, [])),
+
+    %% register self so we can quit
     true = register(suicide, self()),
     ok.
 

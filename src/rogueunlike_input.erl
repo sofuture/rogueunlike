@@ -15,6 +15,7 @@
 -include("rogueunlike.hrl").
 
 -export([input_loop/0, key_loop/0]).
+-export([script_mode/1]).
 
 %% ============================================================================
 %% Module API
@@ -24,16 +25,7 @@ input_loop() ->
     true = register(keyreader, 
         spawn(?MODULE, key_loop, [])),
     
-    BasicInput = fun(Input) ->
-            case Input of
-                $q -> 
-                    suicide ! {exit, die};
-                _ ->
-                    logic ! {dosomething, nil}
-            end
-    end,
-
-    recv_loop(BasicInput).
+    recv_loop(fun(_) -> ok end).
 
 %% ============================================================================
 %% Internal Functions
@@ -58,5 +50,16 @@ recv_loop(Mode) ->
 key_loop() ->
     input ! {input, cecho:getch()},
     key_loop().
+
+%% ============================================================================
+%% Input Modes
+%% ============================================================================
+
+script_mode(Input) ->
+    case Input of
+        $q -> suicide ! {exit, die};
+        _ -> script ! {dosomething, nil}
+    end.
+
 
 
