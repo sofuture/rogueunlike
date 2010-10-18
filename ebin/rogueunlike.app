@@ -13,7 +13,8 @@
     rogueunlike_level,
     rogueunlike_menu,
     rogueunlike_util,
-    rogueunlike_char
+    rogueunlike_char,
+    rogueunlike_input
     ]},
   {env, []},
   {mod, {rogueunlike, []}}]}.

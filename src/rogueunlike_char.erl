@@ -14,10 +14,10 @@
 -include("cecho.hrl").
 -include("rogueunlike.hrl").
 
--export([char_loop/1]).
+-export([char_loop/1, stat_line/1]).
 
 %% ============================================================================
-%% Application API
+%% Module API
 %% ============================================================================
 
 char_loop(Char) ->
@@ -28,6 +28,15 @@ char_loop(Char) ->
         _ -> 
             char_loop(Char)
     end.
+
+stat_line(Char) ->
+    Name = Char#cstats.name,
+    Race = Char#cstats.race,
+    Level = Char#cstats.level,
+    Hp = Char#cstats.hp,
+    HpMax = Char#cstats.hpmax,
+    Format = "~s the ~s (Lvl ~p) HP: ~p/~p",
+    io_lib:format(Format, [Name, Race, Level, Hp, HpMax]).
 
 %% ============================================================================
 %% Internal Functions

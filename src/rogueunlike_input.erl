@@ -7,31 +7,56 @@
 %% Do what thou wilt shall be the whole of the law.
 %% ============================================================================
 
--module(rogueunlike_util).
+-module(rogueunlike_input).
 
 -author("Jeff Zellner <jeff.zellner@gmail.com>").
 
 -include("cecho.hrl").
 -include("rogueunlike.hrl").
 
--export([get_window_dimensions/0, centering_coords/2]).
+-export([input_loop/0, key_loop/0]).
 
 %% ============================================================================
 %% Module API
 %% ============================================================================
 
-get_window_dimensions() ->
-    {Y, X} = cecho:getmaxyx(),
-    {X, Y}.
+input_loop() ->
+    true = register(keyreader, 
+        spawn(?MODULE, key_loop, [])),
+    
+    BasicInput = fun(Input) ->
+            case Input of
+                $q -> 
+                    suicide ! {exit, die};
+                _ ->
+                    logic ! {dosomething, nil}
+            end
+    end,
 
-centering_coords(Width, Height) ->
-    {MaxX, MaxY} = get_window_dimensions(),
-    X = (MaxX - Width) div 2,
-    Y = (MaxY - Height) div 2,
-    {X, Y}.
+    recv_loop(BasicInput).
 
 %% ============================================================================
 %% Internal Functions
 %% ============================================================================
+
+recv_loop(Mode) ->
+    receive
+        {exit, _} -> 
+            ok;
+
+        {mode, NewMode} ->
+            recv_loop(NewMode);
+
+        {input, Input} ->
+            Mode(Input),
+            recv_loop(Mode);
+            
+        _ -> 
+            recv_loop(Mode)
+    end.
+
+key_loop() ->
+    input ! {input, cecho:getch()},
+    key_loop().
 
 

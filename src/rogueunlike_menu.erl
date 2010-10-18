@@ -28,6 +28,11 @@ console_loop(Cons) ->
             console_loop(Cons#console_state{
                     win = Win, lines = [], height = Height, width = MaxX});
 
+        {stats, Char} ->
+            draw_console(Cons),
+            draw_stats(Char, Cons),
+            console_loop(Cons);
+
         {msg, Text} ->
             NextCons = Cons#console_state{
                     lines = [Text | Cons#console_state.lines]},
@@ -92,27 +97,43 @@ create_console(Height) ->
 
 draw_console(#console_state{lines = Lines,
         win = Win, height = _Height, width = _Width} = Cons) ->
-    [Last | Rest] = Lines,
-    clear_console(Cons),    
-    cecho:wmove(Win, 2, 0),
-    cecho:waddstr(Win, Last),
-    case Rest of
-        [Last2 | _] ->
-            cecho:wmove(Win, 1, 0),
-            cecho:waddstr(Win, Last2);
-        [] -> ok
+    clear_console(Cons),
+    case Lines of
+        [Last | Rest] ->
+            cecho:wmove(Win, 2, 0),
+            cecho:waddstr(Win, Last),
+            case Rest of
+                [Last2 | _] ->
+                    cecho:wmove(Win, 1, 0),
+                    cecho:waddstr(Win, Last2);
+                [] -> ok
+            end;
+        [] ->
+            ok
     end,
     cecho:wrefresh(Win),
     Cons.
 
+%% draw the stat line after clearing it with a baseline hline
+
+draw_stats(Char, #console_state{
+        win = Win, height = _Height, width = Width} = _Cons) ->
+    cecho:wmove(Win, 0, 0),
+    cecho:whline(Win, $=, Width),
+    Line = io_lib:format("  ~s  ", [rogueunlike_char:stat_line(Char)]),
+    cecho:wmove(Win, 0, 2),
+    cecho:waddstr(Win, Line),
+    cecho:wrefresh(Win),
+    ok.
+
+%% clear the message part of the console
+
 clear_console(#console_state{
         win = Win, height = _Height, width = Width} = _Cons) ->
-    FStr = "~" ++ integer_to_list(Width) ++ "c",
-    ClearStr = io_lib:format(FStr,[$\s]),
     cecho:wmove(Win, 1, 0),
-    cecho:waddstr(Win, ClearStr),
+    cecho:whline(Win, $\s, Width),
     cecho:wmove(Win, 2, 0),
-    cecho:waddstr(Win, ClearStr).
+    cecho:whline(Win, $\s, Width).
 
 menu_coords(MenuItems) ->
     MenuWidth = menu_width(MenuItems),
