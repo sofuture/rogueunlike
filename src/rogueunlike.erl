@@ -36,6 +36,7 @@ stop(_) ->
 go() ->
     init(),
     start_systems(),
+    Store = rogueunlike_level:kaboom(),
 
     %% create console
     console ! {create, 2},
