@@ -15,7 +15,7 @@
 -include("rogueunlike.hrl").
 
 -export([draw_level/1, load_level/1, level_height/1, level_width/1]).
--export([kaboom/0]).
+-export([load_levels/0]).
 
 %% ============================================================================
 %% Module API
@@ -41,9 +41,8 @@ load_level(LevelName) ->
         {error, Reason}
     end.
 
-kaboom() ->
-    load_all_level( init_db() ).
-
+load_levels() ->
+    load_all_level(init_db()).
 
 level_height(_Level = #level{data = LData}) ->
     length(binary:split(LData, <<$\n>>, [global])).
@@ -79,34 +78,35 @@ print_line(Y, Win, Line) ->
     cecho:wmove(Win, Y, 1),
     cecho:waddstr(Win, Line).
 
-%% ===
-%% ets
-%% ===
+%% ============================================================================
+%% ETS level management
+%% ============================================================================
 
 init_db() ->
     ets:new(lookup, []).
 
-%% returning true or false
-%% squashin all dis errrrror
-load_dis_level(LevelName, Store) ->
+load_single_level(LevelName, Store) ->
     case load_level(LevelName) of
         {ok, Level} ->
             ets:insert(Store, Level);
-        {_} ->
+        _ ->
             false
     end.
 
 load_all_level(Store) ->
-    lists:foreach(fun(Level) -> load_dis_level(Level, Store) end, list_levels()),
+    Load = fun(Level) ->
+        load_single_level(Level, Store)
+    end,
+    lists:foreach(Load, list_levels()),
     Store.
 
-
 list_levels() ->
-    filelib:wildcard("level*.dat", "../priv/").
+    Dir = filename:dirname(code:which(?MODULE)) ++ "/../priv/",
+    filelib:wildcard("level*.dat", Dir).
 
-lookup_level(Levels, Level_num) ->
-    ets:lookup(Levels, Level_num).
+lookup_level(Levels, LevelNum) ->
+    ets:lookup(Levels, LevelNum).
 
-insert_level(Levels, Level_num, Level_str) ->
-    ets:insert(Levels, {Level_num, Level_str}).
+insert_level(Levels, LevelNum, LevelBin) ->
+    ets:insert(Levels, {LevelNum, LevelBin}).
 
