@@ -34,13 +34,19 @@
 	 waddstr/2, waddch/2, mvwaddstr/4, mvwaddch/4, wrefresh/1, hline/2,
 	 whline/3, vline/2, wvline/3, border/8, wborder/9, box/3, getyx/1,
 	 getmaxyx/1, attron/2, attroff/2, keypad/2, getch/0, getline/0,
-     werase/1]).
+     werase/1, initscr/0, endwin/0, sigwinch/0]).
 
 %% =============================================================================
 %% Application API
 %% =============================================================================
 refresh() ->
     call(?REFRESH).
+
+endwin() ->
+    call(?ENDWIN).
+
+initscr() ->
+    call(?INITSCR).
 
 cbreak() -> 
     call(?CBREAK).
@@ -189,6 +195,10 @@ keypad(Window, BFlag) when is_integer(Window) andalso is_boolean(BFlag) ->
 
 getch() ->
     cecho_srv:getch().
+
+sigwinch() ->
+    call(?REGSIGWINCH),
+    cecho_srv:sigwinch().
 
 getline() ->
     case getch() of

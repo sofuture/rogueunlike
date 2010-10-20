@@ -90,6 +90,9 @@ void do_wvline(state *st);
 void do_wborder(state *st);
 void do_box(state *st);
 void do_keypad(state *st);
+void do_regsigwinch(state *st);
+
+state *stpt;
 
 // =============================================================================
 // Erlang Callbacks
@@ -116,8 +119,19 @@ static void do_getch(ErlDrvData drvstate, ErlDrvEvent event) {
   int keycode;
   ei_x_new_with_version(&eixb);
   keycode = getch();
+  tuple(&eixb, 2);
+  atom(&eixb, "getch", 5);
   integer(&eixb, keycode);
   driver_output(st->drv_port, eixb.buff, eixb.index);
+}
+
+void handle_winch(int sig){
+  ei_x_buff eixb;
+  ei_x_new_with_version(&eixb);
+  tuple(&eixb, 2);
+  atom(&eixb, "sigwinch", 8);
+  atom(&eixb, "sigwinch", 8);
+  driver_output(stpt->drv_port, eixb.buff, eixb.index);
 }
 
 static int control(ErlDrvData drvstate, unsigned int command, char *args,
@@ -163,6 +177,7 @@ static int control(ErlDrvData drvstate, unsigned int command, char *args,
   case WBORDER: do_wborder(st); break;
   case BOX: do_box(st); break;
   case KEYPAD: do_keypad(st); break;
+  case REGSIGWINCH: do_regsigwinch(st); break;
   default: break;
   }
 
@@ -494,15 +509,15 @@ void do_keypad(state *st) {
   encode_ok_reply(st, keypad(st->win[slot], bf));
 }
 
+void do_regsigwinch(state *st) {
+  stpt = st;
+  signal(SIGWINCH, handle_winch);
+  encode_ok_reply(st, OK);
+}
+
 // =============================================================================
 // Utility functions
 // =============================================================================
-state *stpt;
-
-void handle_winch(int sig){
-  signal(SIGWINCH, handle_winch);
-  sigwinch(stpt);
-}
 
 void init_state(state *st, char *args, int argslen) {
   st->index = 0;
@@ -514,16 +529,10 @@ void init_state(state *st, char *args, int argslen) {
   assert(st->index != 0);
   stpt = st;
   ei_x_new_with_version(&(st->eixb));
-  signal(SIGWINCH, handle_winch);
 }
 
 void ok(state *st) {
   atom(&(st->eixb), "ok", 2);
-}
-
-void sigwinch(state *st) {
-  atom(&(st->eixb), "sigwinch", 8);
-  do_refresh(st);
 }
 
 void error_tuple(state *st, int code) {
@@ -574,17 +583,17 @@ int findfreewindowslot(state *st) {
 // Erlang driver_entry Specification
 // ===========================================================================
 ErlDrvEntry driver_entry = {
-  NULL,
-  start,
-  stop,
-  NULL,
-  do_getch,
-  NULL,
-  "cecho",
-  NULL,
-  NULL,
-  control,
-  NULL
+  NULL,         /* init */
+  start,        /* startup */
+  stop,         /* shutdown */
+  NULL,         /* output */
+  do_getch,     /* ready_input */
+  NULL,         /* ready_output */
+  "cecho",      /* name */
+  NULL,         /* finish */
+  NULL,         /* handle */
+  control,      /* control */
+  NULL          /* timeout */
 };
 
 // =============================================================================

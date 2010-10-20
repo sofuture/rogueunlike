@@ -19,7 +19,7 @@
         charisma = 0}).
 
 -record(cstats, {
-        name = "",
+        name = nil,
         gender = nil,
         race = nil,
         level = 0,

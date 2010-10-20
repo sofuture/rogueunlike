@@ -18,6 +18,7 @@
 -export([start/2,stop/1]).
 -export([go/0,die/0]).
 -export([test_loop/1]).
+-export([resize_loop/0]).
 
 %% ============================================================================
 %% Behaviour Callbacks
@@ -47,7 +48,7 @@ go() ->
     %% run the script engine
     true = register(script, spawn(?MODULE, test_loop, [test_script(test_char())])),
 
-    wait_for_death().
+    main_loop().
 
 die() ->
     console ! {exit, die},
@@ -86,39 +87,43 @@ test_loop(Steps) ->
     end.
 
 test_script(Char) ->
-
     NextChar = Char#cstats{hp = Char#cstats.hp - 10},
     NextChar1 = NextChar#cstats{hp = NextChar#cstats.hp - 10},
     NextChar2 = NextChar1#cstats{hp = NextChar1#cstats.hp - 50},
-
     Actions = [
         fun() ->
-            console ! {stats, Char},
+            char ! {char, Char},
+            char ! {stats},
             console ! {msg, "You are in a dark maze of twisty passages, all of them alike."}
         end,
 
         fun() ->
-            console ! {stats, NextChar},
+            char ! {char, NextChar},
+            char ! {stats},
             console ! {msg, "You hear a noise."}
         end,
    
         fun() ->
-            console ! {stats, NextChar1},
+            char ! {char, NextChar1},
+            char ! {stats},
             console ! {msg, "It is pitch black. You are likely to be eaten by a grue."}
         end,
 
         fun() ->
-            console ! {msg, "Stop hitting yourself!"},
-            console ! {stats, NextChar2}
+            char ! {char, NextChar2},
+            char ! {stats},
+            console ! {msg, "Stop hitting yourself!"}
         end,
 
         fun() ->
-            console ! {stats, NextChar1},
+            char ! {char, NextChar1},
+            char ! {stats},
             console ! {msg, "You quaff a healing potion and feel slammin!"}
         end,
 
         fun() ->
-            console ! {stats, NextChar1#cstats{hp = 0}},
+            char ! {char, NextChar1#cstats{hp = 0}},
+            char ! {stats},
             console ! {msg, "Lol! It was poison! You're DEAD!!"}
         end
     ],
@@ -129,20 +134,28 @@ test_script(Char) ->
 %% Internal Functions
 %% ============================================================================
 
-wait_for_death() ->
+main_loop() ->
     receive
+        redraw ->
+            input ! console ! {redraw, sigwinch},
+            main_loop();
+
         {exit, _} ->
             die();
         _ -> 
-            wait_for_death()
+            main_loop()
     end.
+
+resize_loop() ->
+    cecho:sigwinch(),
+    main ! redraw,
+    resize_loop().
 
 init() ->
     application:start(rogueunlike),
     ok.
 
 start_systems() ->
-
     true = register(console, 
         spawn(rogueunlike_menu, console_loop, [#console_state{}])),
 
@@ -152,8 +165,10 @@ start_systems() ->
     true = register(input,
         spawn(rogueunlike_input, input_loop, [])),
 
+    spawn(?MODULE, resize_loop, []),
+
     %% register self so we can quit
-    true = register(suicide, self()),
+    true = register(main, self()),
     ok.
 
 

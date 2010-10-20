@@ -26,12 +26,25 @@ console_loop(Cons) ->
             Win = create_console(Height),
             {_, MaxX} = cecho:getmaxyx(),
             console_loop(Cons#console_state{
-                    win = Win, lines = [], height = Height, width = MaxX});
+                    win = Win, height = Height, width = MaxX});
 
         {stats, Char} ->
             draw_console(Cons),
             draw_stats(Char, Cons),
             console_loop(Cons);
+
+        {redraw, _Reason} ->
+            cecho:werase(Cons#console_state.win),
+            cecho:endwin(),
+            cecho:initscr(),
+            cecho:erase(),
+            cecho:refresh(),
+            Win = create_console(Cons#console_state.height),
+            {_, MaxX} = cecho:getmaxyx(),
+            NewCons = Cons#console_state{width=MaxX, win=Win},
+            draw_console(NewCons),
+            char ! {stats},
+            console_loop(NewCons);
 
         {msg, Text} ->
             NextCons = Cons#console_state{
@@ -118,13 +131,19 @@ draw_console(#console_state{lines = Lines,
 
 draw_stats(Char, #console_state{
         win = Win, height = _Height, width = Width} = _Cons) ->
-    cecho:wmove(Win, 0, 0),
-    cecho:whline(Win, $=, Width),
-    Line = io_lib:format("  ~s  ", [rogueunlike_char:stat_line(Char)]),
-    cecho:wmove(Win, 0, 2),
-    cecho:waddstr(Win, Line),
-    cecho:wrefresh(Win),
-    ok.
+    case Char#cstats.name of
+        nil -> 
+            ok;
+        _ -> 
+            cecho:wmove(Win, 0, 0),
+            cecho:whline(Win, $=, Width),
+            Line = io_lib:format("  ~s  ", [rogueunlike_char:stat_line(Char)]),
+            cecho:wmove(Win, 0, 2),
+            cecho:waddstr(Win, Line),
+            cecho:wrefresh(Win),
+            ok
+    end.
+        
 
 %% clear the message part of the console
 

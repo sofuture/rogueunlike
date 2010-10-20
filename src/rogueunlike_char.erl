@@ -22,6 +22,17 @@
 
 char_loop(Char) ->
     receive
+%        {redraw, _Reason} ->
+%            console ! {stats, Char},
+%            char_loop(Char);
+
+        {stats} ->
+            console ! {stats, Char},
+            char_loop(Char);
+
+        {char, NewChar} ->
+            char_loop(NewChar);
+
         {exit, _} -> 
             ok;
 

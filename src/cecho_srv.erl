@@ -27,10 +27,10 @@
 	 code_change/3]).
 
 %% Module API
--export([start_link/0, call/2, getch/0]).
+-export([start_link/0, call/2, getch/0, sigwinch/0]).
 
 %% Records
--record(state, { port, getch, observer }).
+-record(state, { port, getch, sigwinch, observer }).
 
 %% =============================================================================
 %% Module API
@@ -43,6 +43,9 @@ call(Cmd, Args) ->
 
 getch() ->
     gen_server:call(?MODULE, getch, infinity).
+
+sigwinch() ->
+    gen_server:call(?MODULE, sigwinch, infinity).
 
 %% =============================================================================
 %% Behaviour Callbacks
@@ -62,6 +65,8 @@ init(no_args) ->
 
 handle_call({call, Cmd, Args}, _From, State) ->
     {reply, do_call(State#state.port, Cmd, Args), State};
+handle_call(sigwinch, From, #state{ sigwinch = undefined } = State) ->
+    {noreply, State#state{ sigwinch = From }};
 handle_call(getch, From, #state{ getch = undefined } = State) ->
     {noreply, State#state{ getch = From }};
 handle_call(getch, _From, State) ->
@@ -73,11 +78,29 @@ terminate(_Reason, State) ->
     erlang:port_close(State#state.port),
     erl_ddll:unload("cecho").
 
-handle_info({_Port, {data, _Binary}}, #state{ getch = undefined } = State) ->
+handle_info({_Port, {data, _Binary}}, #state{ 
+        getch = undefined, sigwinch = undefined } = State) ->
     {noreply, State};
-handle_info({_Port, {data, Binary}}, State) ->
-    gen_server:reply(State#state.getch, binary_to_term(Binary)),
-    {noreply, State#state{ getch = undefined }}.
+handle_info({_Post, {data, Binary}}, State) ->
+    {Type, Data} = binary_to_term(Binary),
+    case Type of
+        getch ->
+            case State#state.getch of
+                undefined -> {noreply, State};
+                From ->
+                    gen_server:reply(From, Data),
+                    {noreply, State#state{ getch = undefined }}
+            end;
+        sigwinch ->
+            case State#state.sigwinch of
+                undefined -> {noreply, State};
+                From ->
+                    gen_server:reply(From, Data),
+                    {noreply, State#state{ sigwinch = undefined }}
+            end;
+        _ ->
+            {noreply, State}
+    end.
 
 %% @hidden
 handle_cast(_, State) ->

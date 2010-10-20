@@ -42,13 +42,18 @@ recv_loop(Mode) ->
         {input, Input} ->
             Mode(Input),
             recv_loop(Mode);
+
+        {redraw, _Reason} ->
+            recv_loop(Mode);
             
         _ -> 
             recv_loop(Mode)
     end.
 
 key_loop() ->
-    input ! {input, cecho:getch()},
+    cecho:noecho(),
+    Char = cecho:getch(),
+    input ! {input, Char},
     key_loop().
 
 %% ============================================================================
@@ -57,7 +62,7 @@ key_loop() ->
 
 script_mode(Input) ->
     case Input of
-        $q -> suicide ! {exit, die};
+        $q -> main ! {exit, die};
         _ -> script ! {dosomething, nil}
     end.
 
