@@ -119,10 +119,14 @@ static void do_getch(ErlDrvData drvstate, ErlDrvEvent event) {
   int keycode;
   ei_x_new_with_version(&eixb);
   keycode = getch();
-  tuple(&eixb, 2);
-  atom(&eixb, "getch", 5);
-  integer(&eixb, keycode);
-  driver_output(st->drv_port, eixb.buff, eixb.index);
+  if(keycode == KEY_RESIZE) {
+    encode_ok_reply(st, OK);
+  } else {
+    tuple(&eixb, 2);
+    atom(&eixb, "getch", 5);
+    integer(&eixb, keycode);
+    driver_output(st->drv_port, eixb.buff, eixb.index);
+  }
 }
 
 void handle_winch(int sig){

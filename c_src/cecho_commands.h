@@ -52,3 +52,5 @@
 #define BOX 35
 #define KEYPAD 36
 #define REGSIGWINCH 37
+
+#define KEY_RESIZE 410
