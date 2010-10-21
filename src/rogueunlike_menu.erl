@@ -14,11 +14,14 @@
 -include("cecho.hrl").
 -include("rogueunlike.hrl").
 
--export([draw/1, get_choice/0, console_loop/1]).
+-export([draw/1, get_choice/0, console_loop/0]).
 
 %% ============================================================================
 %% Application API
 %% ============================================================================
+
+console_loop() ->
+    console_loop(#console_state{}).
 
 console_loop(Cons) ->
     receive

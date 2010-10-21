@@ -15,7 +15,7 @@
 -include("rogueunlike.hrl").
 
 -export([input_loop/0, key_loop/0]).
--export([script_mode/1]).
+-export([script_mode/1,game_mode/1]).
 
 %% ============================================================================
 %% Module API
@@ -66,5 +66,9 @@ script_mode(Input) ->
         _ -> script ! {dosomething, nil}
     end.
 
-
+game_mode(Input) ->
+    case Input of
+        $Q -> main ! {exit, die};
+        _ -> ok
+    end.
 

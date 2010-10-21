@@ -10,11 +10,11 @@
     cecho_srv, 
 
     %% modules
-    rogueunlike_level,
+    rogueunlike_char,
+    rogueunlike_input,
     rogueunlike_menu,
     rogueunlike_util,
-    rogueunlike_char,
-    rogueunlike_input
+    rogueunlike_world
     ]},
   {env, []},
   {mod, {rogueunlike, []}}]}.

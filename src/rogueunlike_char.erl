@@ -14,18 +14,17 @@
 -include("cecho.hrl").
 -include("rogueunlike.hrl").
 
--export([char_loop/1, stat_line/1]).
+-export([char_loop/0, stat_line/1]).
 
 %% ============================================================================
 %% Module API
 %% ============================================================================
 
+char_loop() ->
+    char_loop(#cstats{}).
+
 char_loop(Char) ->
     receive
-%        {redraw, _Reason} ->
-%            console ! {stats, Char},
-%            char_loop(Char);
-
         {stats} ->
             console ! {stats, Char},
             char_loop(Char);

@@ -17,7 +17,6 @@
 
 -export([start/2,stop/1]).
 -export([go/0,die/0]).
--export([test_loop/1]).
 -export([resize_loop/0]).
 
 %% ============================================================================
@@ -35,19 +34,15 @@ stop(_) ->
 %% ============================================================================
 
 go() ->
+%    error_logger:tty(false),
     init(),
     start_systems(),
-    _Levels = rogueunlike_level:load_levels(),
-
-    %% create console
     console ! {create, 2},
-    
-    %% set up input for running script
-    input ! {mode, {rogueunlike_input, script_mode}},
-
-    %% run the script engine
-    true = register(script, spawn(?MODULE, test_loop, [test_script(test_char())])),
-
+    console ! {msg, "Press Q to quit!"},
+    input ! {mode, {rogueunlike_input, game_mode}},
+    world ! {init},
+    world ! {database_test, go},
+    world ! {redraw, init},
     main_loop().
 
 die() ->
@@ -58,86 +53,13 @@ die() ->
     halt().
 
 %% ============================================================================
-%% Test Functions
-%% ============================================================================
-
-test_char() ->
-    #cstats{
-        name = "Groflehanger",
-        gender = m,
-        race = "Kitchen Dwarf",
-        level = 3,
-        gold = 1034,
-        hp = 500,
-        hpmax = 500,
-        ac = -234}.
-
-test_loop(Steps) ->
-    receive
-        {dosomething, _} ->
-            case Steps of
-                [Head|Rest] -> 
-                    Head(),
-                    test_loop(Rest);
-                [] ->
-                    test_loop(Steps)
-            end;
-        _ ->
-            test_loop(Steps)
-    end.
-
-test_script(Char) ->
-    NextChar = Char#cstats{hp = Char#cstats.hp - 10},
-    NextChar1 = NextChar#cstats{hp = NextChar#cstats.hp - 10},
-    NextChar2 = NextChar1#cstats{hp = NextChar1#cstats.hp - 50},
-    Actions = [
-        fun() ->
-            char ! {char, Char},
-            char ! {stats},
-            console ! {msg, "You are in a dark maze of twisty passages, all of them alike."}
-        end,
-
-        fun() ->
-            char ! {char, NextChar},
-            char ! {stats},
-            console ! {msg, "You hear a noise."}
-        end,
-   
-        fun() ->
-            char ! {char, NextChar1},
-            char ! {stats},
-            console ! {msg, "It is pitch black. You are likely to be eaten by a grue."}
-        end,
-
-        fun() ->
-            char ! {char, NextChar2},
-            char ! {stats},
-            console ! {msg, "Stop hitting yourself!"}
-        end,
-
-        fun() ->
-            char ! {char, NextChar1},
-            char ! {stats},
-            console ! {msg, "You quaff a healing potion and feel slammin!"}
-        end,
-
-        fun() ->
-            char ! {char, NextChar1#cstats{hp = 0}},
-            char ! {stats},
-            console ! {msg, "Lol! It was poison! You're DEAD!!"}
-        end
-    ],
-    Actions.
-
-
-%% ============================================================================
 %% Internal Functions
 %% ============================================================================
 
 main_loop() ->
     receive
         redraw ->
-            input ! console ! {redraw, sigwinch},
+            input ! console ! world ! {redraw, sigwinch},
             main_loop();
 
         {exit, _} ->
@@ -145,6 +67,8 @@ main_loop() ->
         _ -> 
             main_loop()
     end.
+
+% listen for SIGWINCH at window resize
 
 resize_loop() ->
     cecho:sigwinch(),
@@ -157,17 +81,19 @@ init() ->
 
 start_systems() ->
     true = register(console, 
-        spawn(rogueunlike_menu, console_loop, [#console_state{}])),
+        spawn(rogueunlike_menu, console_loop, [])),
 
     true = register(char,
-        spawn(rogueunlike_char, char_loop, [#cstats{}])),
+        spawn(rogueunlike_char, char_loop, [])),
 
     true = register(input,
         spawn(rogueunlike_input, input_loop, [])),
 
+    true = register(world,
+        spawn(rogueunlike_world, world_loop, [])),
+
     spawn(?MODULE, resize_loop, []),
 
-    %% register self so we can quit
     true = register(main, self()),
     ok.
 

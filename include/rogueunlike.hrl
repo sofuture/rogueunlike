@@ -10,6 +10,11 @@
         height = 0, 
         width = 0}).
 
+-record(world, {
+        loc = nil,
+        stuff = [],
+        effects = []}).
+
 -record(cattributes, {
         strength = 0, 
         dexterity = 0, 
