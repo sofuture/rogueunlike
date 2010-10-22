@@ -74,11 +74,6 @@ draw_world() ->
     DrawF = fun(Spot) ->
         Stuff = Spot#world.stuff,
         Char = square_char(Stuff),
-
-        %    [wall] -> $#;
-        %    [walkable] -> $.;
-        %    _ -> $\s
-        %end,
         {LocX, LocY} = Spot#world.loc,
         cecho:mvaddch(DrawY+LocY, DrawX+LocX, Char)
     end,
@@ -87,7 +82,7 @@ draw_world() ->
     ok.
 
 square_char(Stuff) ->
-    IsHero = proplists:get_bool(anhero, Stuff),
+    IsHero = proplists:get_bool(hero, Stuff),
     IsWall = proplists:get_bool(wall, Stuff),
     IsWalkable = proplists:get_bool(walkable, Stuff),
     case IsHero of
@@ -140,7 +135,7 @@ test_world() ->
     #world{loc={6,0}, stuff=[wall]},
     #world{loc={7,0}, stuff=[wall]},
     #world{loc={0,1}, stuff=[wall]},
-    #world{loc={1,1}, stuff=[anhero, walkable]},
+    #world{loc={1,1}, stuff=[hero, walkable]},
     #world{loc={2,1}, stuff=[walkable]},
     #world{loc={3,1}, stuff=[walkable]},
     #world{loc={4,1}, stuff=[walkable]},
