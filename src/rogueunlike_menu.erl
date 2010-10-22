@@ -112,24 +112,26 @@ create_console(Height) ->
     Win.
 
 draw_console(#console_state{lines = Lines,
-        win = Win, height = _Height, width = _Width} = Cons) ->
-    clear_console(Cons),
-    case Lines of
-        [Last | Rest] ->
-            cecho:wmove(Win, 2, 0),
-            cecho:waddstr(Win, Last),
-            case Rest of
-                [Last2 | _] ->
-                    cecho:wmove(Win, 1, 0),
-                    cecho:waddstr(Win, Last2);
-                [] -> ok
-            end;
-        [] ->
-            ok
-    end,
+        win = Win, height = Height, width = Width} = Cons) ->
+    clear_lines(Win, Height, Width),
+    draw_lines(Win, Lines, Height),
     cecho:wrefresh(Win),
     Cons.
 
+draw_lines(_, [], _) -> ok;
+draw_lines(_, _, 0) -> ok;
+draw_lines(Win, Lines, Height) ->
+    [Last | Rest] = Lines,
+    cecho:wmove(Win, Height, 0),
+    cecho:waddstr(Win, Last),
+    draw_lines(Win, Rest, Height - 1).
+
+clear_lines(_, 0, _) -> ok;
+clear_lines(Win, Height, Width) ->
+    cecho:wmove(Win, Height, 0),
+    cecho:whline(Win, $\s, Width),
+    clear_lines(Win, Height-1, Width).
+    
 %% draw the stat line after clearing it with a baseline hline
 
 draw_stats(Char, #console_state{
@@ -137,7 +139,7 @@ draw_stats(Char, #console_state{
     case Char#cstats.name of
         nil -> 
             ok;
-        _ -> 
+        _ ->
             cecho:wmove(Win, 0, 0),
             cecho:whline(Win, $=, Width),
             Line = io_lib:format("  ~s  ", [rogueunlike_char:stat_line(Char)]),
@@ -146,16 +148,6 @@ draw_stats(Char, #console_state{
             cecho:wrefresh(Win),
             ok
     end.
-        
-
-%% clear the message part of the console
-
-clear_console(#console_state{
-        win = Win, height = _Height, width = Width} = _Cons) ->
-    cecho:wmove(Win, 1, 0),
-    cecho:whline(Win, $\s, Width),
-    cecho:wmove(Win, 2, 0),
-    cecho:whline(Win, $\s, Width).
 
 menu_coords(MenuItems) ->
     MenuWidth = menu_width(MenuItems),

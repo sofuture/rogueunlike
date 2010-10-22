@@ -37,7 +37,7 @@ go() ->
 %    error_logger:tty(false),
     init(),
     start_systems(),
-    console ! {create, 2},
+    console ! {create, 6},
     console ! {msg, "Press Q to quit!"},
     input ! {mode, {rogueunlike_input, game_mode}},
     world ! {init},

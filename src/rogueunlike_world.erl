@@ -72,17 +72,34 @@ draw_world() ->
     {WorldWidth, WorldHeight} = bounding_dimensions(World),
     {DrawX, DrawY} = rogueunlike_util:centering_coords(WorldWidth, WorldHeight),
     DrawF = fun(Spot) ->
-        Char = case Spot#world.stuff of
-            [walkable] -> ".";
-            [wall] -> "#";
-            _ -> "\s"
-        end,
+        Stuff = Spot#world.stuff,
+        Char = square_char(Stuff),
+
+        %    [wall] -> $#;
+        %    [walkable] -> $.;
+        %    _ -> $\s
+        %end,
         {LocX, LocY} = Spot#world.loc,
-        cecho:mvaddstr(DrawY+LocY, DrawX+LocX, Char)
+        cecho:mvaddch(DrawY+LocY, DrawX+LocX, Char)
     end,
     lists:foreach(DrawF, World),
     cecho:refresh(),
     ok.
+
+square_char(Stuff) ->
+    IsHero = proplists:get_bool(anhero, Stuff),
+    IsWall = proplists:get_bool(wall, Stuff),
+    IsWalkable = proplists:get_bool(walkable, Stuff),
+    case IsHero of
+        true -> $@;
+        _ -> case IsWall of 
+            true -> $#;
+            _ -> case IsWalkable of
+                true -> $.;
+                _ -> $\s
+            end
+        end
+    end.
 
 bounding_dimensions(World) ->
     FXs = fun(Elem) ->
@@ -123,7 +140,7 @@ test_world() ->
     #world{loc={6,0}, stuff=[wall]},
     #world{loc={7,0}, stuff=[wall]},
     #world{loc={0,1}, stuff=[wall]},
-    #world{loc={1,1}, stuff=[walkable]},
+    #world{loc={1,1}, stuff=[anhero, walkable]},
     #world{loc={2,1}, stuff=[walkable]},
     #world{loc={3,1}, stuff=[walkable]},
     #world{loc={4,1}, stuff=[walkable]},
