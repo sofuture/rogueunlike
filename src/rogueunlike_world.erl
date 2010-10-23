@@ -52,7 +52,7 @@ world_loop(State) ->
 %% ============================================================================
 
 test_db(Coord) ->
-    Space = #world{loc = Coord, room = [wall]},
+    Space = #world{loc = Coord, stuff = [wall]},
     Trans = fun() ->
         mnesia:write(Space)
     end,
@@ -72,10 +72,7 @@ draw_world() ->
     {WorldWidth, WorldHeight} = bounding_dimensions(World),
     {DrawX, DrawY} = rogueunlike_util:centering_coords(WorldWidth, WorldHeight),
     DrawF = fun(Spot) ->
-        Mob = Spot#world.mob,
-        Stuff = Spot#world.stuff,
-        Room = Spot#world.room,
-        Char = square_char(Mob, Stuff, Room),
+        Char = square_char(Spot#world.stuff),
         {LocX, LocY} = Spot#world.loc,
         cecho:mvaddch(DrawY+LocY, DrawX+LocX, Char)
     end,
@@ -83,28 +80,11 @@ draw_world() ->
     cecho:refresh(),
     ok.
 
-square_char(Mob, Stuff, Room) ->
-    IsWall = proplists:get_bool(wall, Room),
-    IsWalkable = proplists:get_bool(walkable, Room),
-    
-    case Mob of
-        nil -> 
-            case Stuff of
-                [] -> 
-                    case IsWall of
-                        true -> $#;
-                        _ -> 
-                            case IsWalkable of
-                                true -> $.;
-                                _ -> $\s
-                            end
-                    end;
-                [Thing] -> $T;
-                _ -> $&
-            end;
-        MobChar ->
-            $@
-    end.
+square_char(Stuff) ->
+    PriElement = fun(Elem) -> draw_pref(Elem) end,
+    PrefList = lists:map(PriElement, Stuff),
+    {_Prio, BestChar} = lists:min(PrefList), 
+    BestChar.
 
 bounding_dimensions(World) ->
     FXs = fun(Elem) ->
@@ -136,56 +116,56 @@ test_world() ->
     % 4     ##..###
     % 5      #..#
     % 6      ####
-    [#world{loc={0,0}, room=[wall]},
-    #world{loc={1,0}, room=[wall]},
-    #world{loc={2,0}, room=[wall]},
-    #world{loc={3,0}, room=[wall]},
-    #world{loc={4,0}, room=[wall]},
-    #world{loc={5,0}, room=[wall]},
-    #world{loc={6,0}, room=[wall]},
-    #world{loc={7,0}, room=[wall]},
-    #world{loc={0,1}, room=[wall]},
-    #world{loc={1,1}, mob=hero, room=[walkable]},
-    #world{loc={2,1}, room=[walkable]},
-    #world{loc={3,1}, room=[walkable]},
-    #world{loc={4,1}, room=[walkable]},
-    #world{loc={5,1}, room=[walkable]},
-    #world{loc={6,1}, room=[walkable]},
-    #world{loc={7,1}, room=[wall]},
-    #world{loc={8,1}, room=[wall]},
-    #world{loc={9,1}, room=[wall]},
-    #world{loc={0,2}, room=[wall]},
-    #world{loc={1,2}, room=[wall]},
-    #world{loc={2,2}, room=[wall]},
-    #world{loc={3,2}, room=[wall]},
-    #world{loc={4,2}, room=[walkable]},
-    #world{loc={5,2}, room=[walkable]},
-    #world{loc={6,2}, room=[walkable]},
-    #world{loc={7,2}, room=[walkable]},
-    #world{loc={8,2}, room=[walkable]},
-    #world{loc={9,2}, room=[wall]},
-    #world{loc={3,3}, room=[wall]},
-    #world{loc={4,3}, room=[walkable]},
-    #world{loc={5,3}, room=[walkable]},
-    #world{loc={6,3}, room=[walkable]},
-    #world{loc={7,3}, room=[walkable]},
-    #world{loc={8,3}, room=[walkable]},
-    #world{loc={9,3}, room=[wall]},
-    #world{loc={3,4}, room=[wall]},
-    #world{loc={4,4}, room=[wall]},
-    #world{loc={5,4}, room=[walkable]},
-    #world{loc={6,4}, room=[walkable]},
-    #world{loc={7,4}, room=[wall]},
-    #world{loc={8,4}, room=[wall]},
-    #world{loc={9,4}, room=[wall]},
-    #world{loc={4,5}, room=[wall]},
-    #world{loc={5,5}, room=[walkable]},
-    #world{loc={6,5}, room=[walkable]},
-    #world{loc={7,5}, room=[wall]},
-    #world{loc={4,6}, room=[wall]},
-    #world{loc={5,6}, room=[wall]},
-    #world{loc={6,6}, room=[wall]},
-    #world{loc={7,6}, room=[wall]}].
+    [#world{loc={0,0}, stuff=[wall]},
+    #world{loc={1,0}, stuff=[wall]},
+    #world{loc={2,0}, stuff=[wall]},
+    #world{loc={3,0}, stuff=[wall]},
+    #world{loc={4,0}, stuff=[wall]},
+    #world{loc={5,0}, stuff=[wall]},
+    #world{loc={6,0}, stuff=[wall]},
+    #world{loc={7,0}, stuff=[wall]},
+    #world{loc={0,1}, stuff=[wall]},
+    #world{loc={1,1}, stuff=[hero, walkable]},
+    #world{loc={2,1}, stuff=[walkable]},
+    #world{loc={3,1}, stuff=[walkable]},
+    #world{loc={4,1}, stuff=[walkable]},
+    #world{loc={5,1}, stuff=[walkable]},
+    #world{loc={6,1}, stuff=[walkable]},
+    #world{loc={7,1}, stuff=[wall]},
+    #world{loc={8,1}, stuff=[wall]},
+    #world{loc={9,1}, stuff=[wall]},
+    #world{loc={0,2}, stuff=[wall]},
+    #world{loc={1,2}, stuff=[wall]},
+    #world{loc={2,2}, stuff=[wall]},
+    #world{loc={3,2}, stuff=[wall]},
+    #world{loc={4,2}, stuff=[walkable]},
+    #world{loc={5,2}, stuff=[walkable]},
+    #world{loc={6,2}, stuff=[walkable]},
+    #world{loc={7,2}, stuff=[walkable]},
+    #world{loc={8,2}, stuff=[walkable]},
+    #world{loc={9,2}, stuff=[wall]},
+    #world{loc={3,3}, stuff=[wall]},
+    #world{loc={4,3}, stuff=[walkable]},
+    #world{loc={5,3}, stuff=[walkable]},
+    #world{loc={6,3}, stuff=[walkable]},
+    #world{loc={7,3}, stuff=[walkable]},
+    #world{loc={8,3}, stuff=[walkable]},
+    #world{loc={9,3}, stuff=[wall]},
+    #world{loc={3,4}, stuff=[wall]},
+    #world{loc={4,4}, stuff=[wall]},
+    #world{loc={5,4}, stuff=[walkable]},
+    #world{loc={6,4}, stuff=[walkable]},
+    #world{loc={7,4}, stuff=[wall]},
+    #world{loc={8,4}, stuff=[wall]},
+    #world{loc={9,4}, stuff=[wall]},
+    #world{loc={4,5}, stuff=[wall]},
+    #world{loc={5,5}, stuff=[walkable]},
+    #world{loc={6,5}, stuff=[walkable]},
+    #world{loc={7,5}, stuff=[wall]},
+    #world{loc={4,6}, stuff=[wall]},
+    #world{loc={5,6}, stuff=[wall]},
+    #world{loc={6,6}, stuff=[wall]},
+    #world{loc={7,6}, stuff=[wall]}].
 
 %% ============================================================================
 %% Mnesia management
@@ -227,3 +207,11 @@ is_fresh_startup() ->
             is_fresh_startup()
     end.
 
+draw_pref(Thing) ->
+    case Thing of
+        hero ->     {0, $@};
+        fountain -> {8, $U};
+        walkable -> {9, $.};
+        wall ->     {10, $#};
+        _ ->        {10000, $\s}
+    end.

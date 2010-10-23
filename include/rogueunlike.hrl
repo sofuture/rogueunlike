@@ -16,9 +16,7 @@
 
 -record(world, {
         loc = nil,
-        mob = nil,
         stuff = [],
-        room = [],
         effects = []}).
 
 -record(cattributes, {
