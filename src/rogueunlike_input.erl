@@ -88,15 +88,24 @@ key_loop(Buffer) ->
 %% Input Modes
 %% ============================================================================
 
-script_mode(Input, State) ->
+script_mode(Input, _State) ->
     case Input of
         $q -> main ! {exit, die};
         _ -> script ! {dosomething, nil}
     end.
 
-game_mode(Input, State) ->
+game_mode(Input, _State) ->
     case Input of
         $Q -> main ! {exit, die};
+        kp_nw -> ok;
+        kp_n -> ok;
+        kp_ne -> ok;
+        kp_w -> ok;
+        kp_center -> ok;
+        kp_e -> ok;
+        kp_sw -> ok;
+        kp_s -> ok;
+        kp_se -> ok;
         _ -> console ! {msg, io_lib:format("~p",[Input])}
     end.
 

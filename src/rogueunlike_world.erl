@@ -51,20 +51,6 @@ world_loop(State) ->
 %% Internal Functions
 %% ============================================================================
 
-test_db(Coord) ->
-    Space = #world{loc = Coord, stuff = [wall]},
-    Trans = fun() ->
-        mnesia:write(Space)
-    end,
-    mnesia:transaction(Trans),
-    console ! {msg, io_lib:format("Inserted space for ~p", [Coord])},
-    DelTrans = fun() ->
-        mnesia:delete({world, Coord})
-    end,
-    mnesia:transaction(DelTrans),
-    console ! {msg, io_lib:format("Deleted space for ~p", [Coord])},
-    ok.
-
 draw_world() ->
     Q = qlc:q([X || X <- mnesia:table(world)]),
     F = fun() -> qlc:eval(Q) end,
