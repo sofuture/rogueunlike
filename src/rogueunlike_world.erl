@@ -195,9 +195,14 @@ is_fresh_startup() ->
 
 draw_pref(Thing) ->
     case Thing of
-        hero ->     {0, $@};
-        fountain -> {8, $U};
-        walkable -> {9, $.};
-        wall ->     {10, $#};
-        _ ->        {10000, $\s}
+        hero ->
+            {0, $@};
+        fountain -> 
+            {8, $U};
+        walkable -> 
+            {9, $.};
+        wall ->
+            {10, $#};
+        _ ->
+            {10000, $\s}
     end.
