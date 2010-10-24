@@ -7,7 +7,8 @@
 
     %% cecho dependancies
     cecho, 
-    cecho_srv, 
+    cecho_srv,
+    mochijson2,
 
     %% modules
     ru_char,
