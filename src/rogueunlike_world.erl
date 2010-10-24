@@ -46,7 +46,6 @@ world_loop(State) ->
             world_loop(State)
     end.
 
-
 %% ============================================================================
 %% Internal Functions
 %% ============================================================================
@@ -207,37 +206,29 @@ draw_pref(Thing) ->
             {10000, $\s}
     end.
 
-
-
 %% ============================================================================
 %% Map Generation
 %% ============================================================================
+
 wall_across(X,Y,N) ->
-    [
-        #world{loc={I,Y}, stuff=[wall]} 
-        || I <- lists:seq(X, X+N-1)
-    ].
+    [#world{loc={I,Y}, stuff=[wall]} || 
+        I <- lists:seq(X, X+N-1)].
+
 wall_down(X,Y,N) ->
-    [
-        #world{loc={X,J}, stuff=[wall]} 
-        || J <- lists:seq(Y, Y+N-1)
-    ].
+    [#world{loc={X,J}, stuff=[wall]} ||
+        J <- lists:seq(Y, Y+N-1)].
 
 row(X, Y, N, Type) ->
-    [
-        #world{loc={I,Y}, stuff=[Type]} 
-        || I <- lists:seq(X, X+N-1)
-    ].
+    [#world{loc={I,Y}, stuff=[Type]} ||
+        I <- lists:seq(X, X+N-1)].
 
 col(X, Y, N, Type) ->
-    [
-        #world{loc={X,J}, stuff=[Type]} 
-        || J <- lists:seq(Y, Y+N-1)
-    ].
+    [#world{loc={X,J}, stuff=[Type]} ||
+        J <- lists:seq(Y, Y+N-1)].
 
 %% *<* dalexander has joined channel #lmit
 %% <dalexander> grids?
-grid(X, Y, I, J, Type) when X == I ->
+grid(X, Y, X, J, Type) ->
     col(X, Y, J - Y + 1, Type);
 grid(X, Y, I, J, Type) ->
     col(X, Y, J - Y + 1, Type) ++
