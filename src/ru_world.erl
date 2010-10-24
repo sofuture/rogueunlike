@@ -7,14 +7,14 @@
 %% Do what thou wilt shall be the whole of the law.
 %% ============================================================================
 
--module(rogueunlike_world).
+-module(ru_world).
 
 -author("Jeff Zellner <jeff.zellner@gmail.com>").
 
 -include_lib("stdlib/include/qlc.hrl").
 
 -include("cecho.hrl").
--include("rogueunlike.hrl").
+-include("ru.hrl").
 
 -export([world_loop/0]).
 
@@ -55,7 +55,7 @@ draw_world() ->
     F = fun() -> qlc:eval(Q) end,
     {atomic, World} = mnesia:transaction(F),
     {WorldWidth, WorldHeight} = bounding_dimensions(World),
-    {DrawX, DrawY} = rogueunlike_util:centering_coords(WorldWidth, WorldHeight),
+    {DrawX, DrawY} = ru_util:centering_coords(WorldWidth, WorldHeight),
     DrawF = fun(Spot) ->
         Char = square_char(Spot#world.stuff),
         {LocX, LocY} = Spot#world.loc,

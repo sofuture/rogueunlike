@@ -3,18 +3,18 @@
   {vsn, "0.0.3"},
   {modules, [
     %% main
-    rogueunlike,
+    ru,
 
     %% cecho dependancies
     cecho, 
     cecho_srv, 
 
     %% modules
-    rogueunlike_char,
-    rogueunlike_input,
-    rogueunlike_menu,
-    rogueunlike_util,
-    rogueunlike_world
+    ru_char,
+    ru_input,
+    ru_console,
+    ru_util,
+    ru_world
     ]},
   {env, []},
-  {mod, {rogueunlike, []}}]}.
+  {mod, {ru, []}}]}.

@@ -7,48 +7,31 @@
 %% Do what thou wilt shall be the whole of the law.
 %% ============================================================================
 
--module(rogueunlike_char).
+-module(ru_util).
 
 -author("Jeff Zellner <jeff.zellner@gmail.com>").
 
 -include("cecho.hrl").
--include("rogueunlike.hrl").
+-include("ru.hrl").
 
--export([char_loop/0, stat_line/1]).
+-export([get_window_dimensions/0, centering_coords/2]).
 
 %% ============================================================================
 %% Module API
 %% ============================================================================
 
-char_loop() ->
-    char_loop(#cstats{}).
+get_window_dimensions() ->
+    {Y, X} = cecho:getmaxyx(),
+    {X, Y}.
 
-char_loop(Char) ->
-    receive
-        {stats} ->
-            console ! {stats, Char},
-            char_loop(Char);
-
-        {char, NewChar} ->
-            char_loop(NewChar);
-
-        {exit, _} -> 
-            ok;
-
-        _ -> 
-            char_loop(Char)
-    end.
-
-stat_line(Char) ->
-    Name = Char#cstats.name,
-    Race = Char#cstats.race,
-    Level = Char#cstats.level,
-    Hp = Char#cstats.hp,
-    HpMax = Char#cstats.hpmax,
-    Format = "~s the ~s (Lvl ~p) HP: ~p/~p",
-    io_lib:format(Format, [Name, Race, Level, Hp, HpMax]).
+centering_coords(Width, Height) ->
+    {MaxX, MaxY} = get_window_dimensions(),
+    X = (MaxX - Width) div 2,
+    Y = (MaxY - Height) div 2,
+    {X, Y}.
 
 %% ============================================================================
 %% Internal Functions
 %% ============================================================================
+
 

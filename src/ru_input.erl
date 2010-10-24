@@ -7,12 +7,12 @@
 %% Do what thou wilt shall be the whole of the law.
 %% ============================================================================
 
--module(rogueunlike_input).
+-module(ru_input).
 
 -author("Jeff Zellner <jeff.zellner@gmail.com>").
 
 -include("cecho.hrl").
--include("rogueunlike.hrl").
+-include("ru.hrl").
 
 -export([input_loop/0, key_loop/1]).
 -export([script_mode/2,game_mode/2]).

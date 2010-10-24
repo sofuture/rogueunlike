@@ -7,21 +7,42 @@
 %% Do what thou wilt shall be the whole of the law.
 %% ============================================================================
 
--module(rogueunlike_menu).
+-module(ru_console).
 
 -author("Jeff Zellner <jeff.zellner@gmail.com>").
 
 -include("cecho.hrl").
--include("rogueunlike.hrl").
+-include("ru.hrl").
 
--export([draw/1, get_choice/0, console_loop/0]).
+-export([create/1, char_stats/1, redraw/1, msg/1, exit/1]).
+-export([draw/1, get_choice/0, start/0]).
 
 %% ============================================================================
 %% Application API
 %% ============================================================================
 
-console_loop() ->
-    console_loop(#console_state{}).
+create(Height) ->
+    ?MODULE ! {create, Height}.
+
+char_stats(Char) ->
+    ?MODULE ! {stats, Char}.
+
+redraw(Reason) ->
+    ?MODULE ! {redraw, Reason}.
+
+msg(Message) ->
+    ?MODULE ! {msg, Message}.
+
+exit(Reason) ->
+    ?MODULE ! {exit, Reason}.
+
+%% ============================================================================
+%% Application Behavior
+%% ============================================================================
+
+start() ->
+    true = register(?MODULE, 
+        spawn(?MODULE, console_loop, [#console_state{}])).
 
 console_loop(Cons) ->
     receive
@@ -142,7 +163,7 @@ draw_stats(Char, #console_state{
         _ ->
             cecho:wmove(Win, 0, 0),
             cecho:whline(Win, $=, Width),
-            Line = io_lib:format("  ~s  ", [rogueunlike_char:stat_line(Char)]),
+            Line = io_lib:format("  ~s  ", [ru_char:stat_line(Char)]),
             cecho:wmove(Win, 0, 2),
             cecho:waddstr(Win, Line),
             cecho:wrefresh(Win),
@@ -152,7 +173,7 @@ draw_stats(Char, #console_state{
 menu_coords(MenuItems) ->
     MenuWidth = menu_width(MenuItems),
     MenuHeight = menu_height(MenuItems),
-    {StartX, StartY} = rogueunlike_util:centering_coords(MenuWidth, MenuHeight),
+    {StartX, StartY} = ru_util:centering_coords(MenuWidth, MenuHeight),
     {MenuHeight, MenuWidth, StartY, StartX}.
 
 menu_height(Items) ->

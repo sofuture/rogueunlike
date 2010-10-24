@@ -7,13 +7,13 @@
 %% Do what thou wilt shall be the whole of the law.
 %% ============================================================================
 
--module(rogueunlike).
+-module(ru).
 
 -author("Jeff Zellner <jeff.zellner@gmail.com>").
 
 -behaviour(application).
 -include("cecho.hrl").
--include("rogueunlike.hrl").
+-include("ru.hrl").
 
 -export([start/2,stop/1]).
 -export([go/0,die/0]).
@@ -34,11 +34,10 @@ stop(_) ->
 %% ============================================================================
 
 go() ->
-%    error_logger:tty(false),
     init(),
     start_systems(),
-    console ! {create, 6},
-    console ! {msg, "Press Q to quit!"},
+    ru_console:create(6),
+    ru_console:msg("Press Q to quit!"),
     input ! {mode, {rogueunlike_input, game_mode}},
     world ! {init},
     world ! {database_test, go},
@@ -46,7 +45,7 @@ go() ->
     main_loop().
 
 die() ->
-    console ! {exit, die},
+    ru_console:exit(die),
     char ! {exit, die},
     input ! {exit, die},
     application:stop(rogueunlike),
@@ -59,7 +58,8 @@ die() ->
 main_loop() ->
     receive
         redraw ->
-            input ! console ! world ! {redraw, sigwinch},
+            input !  world ! {redraw, sigwinch},
+            ru_console:redraw(),
             main_loop();
 
         {exit, _} ->
@@ -80,17 +80,16 @@ init() ->
     ok.
 
 start_systems() ->
-    true = register(console, 
-        spawn(rogueunlike_menu, console_loop, [])),
+    ru_console:start(),
 
     true = register(char,
-        spawn(rogueunlike_char, char_loop, [])),
+        spawn(ru_char, char_loop, [])),
 
     true = register(input,
-        spawn(rogueunlike_input, input_loop, [])),
+        spawn(ru_input, input_loop, [])),
 
     true = register(world,
-        spawn(rogueunlike_world, world_loop, [])),
+        spawn(ru_world, world_loop, [])),
 
     spawn(?MODULE, resize_loop, []),
 
