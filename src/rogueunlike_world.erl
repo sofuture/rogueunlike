@@ -206,3 +206,46 @@ draw_pref(Thing) ->
         _ ->
             {10000, $\s}
     end.
+
+
+
+%% ============================================================================
+%% Map Generation
+%% ============================================================================
+wall_across(X,Y,N) ->
+    [
+        #world{loc={I,Y}, stuff=[wall]} 
+        || I <- lists:seq(X, X+N-1)
+    ].
+wall_down(X,Y,N) ->
+    [
+        #world{loc={X,J}, stuff=[wall]} 
+        || J <- lists:seq(Y, Y+N-1)
+    ].
+
+row(X, Y, N, Type) ->
+    [
+        #world{loc={I,Y}, stuff=[Type]} 
+        || I <- lists:seq(X, X+N-1)
+    ].
+
+col(X, Y, N, Type) ->
+    [
+        #world{loc={X,J}, stuff=[Type]} 
+        || J <- lists:seq(Y, Y+N-1)
+    ].
+
+%% *<* dalexander has joined channel #lmit
+%% <dalexander> grids?
+grid(X, Y, I, J, Type) when X == I ->
+    col(X, Y, J - Y + 1, Type);
+grid(X, Y, I, J, Type) ->
+    col(X, Y, J - Y + 1, Type) ++
+    grid(X + 1, Y, I, J, Type).
+
+room(X, Y, I, J) ->
+    row(X, Y, I - X + 1, wall) ++ % top
+    row(X, J, I - X + 1, wall) ++ % bottom
+    col(X, Y + 1, J - Y - 1, wall) ++ % left
+    col(I, Y + 1, J - Y - 1, wall) ++ % right
+    grid(X + 1, Y + 1, I - 1, J - 1, walkable).
