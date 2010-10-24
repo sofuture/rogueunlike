@@ -106,6 +106,6 @@ game_mode(Input, _State) ->
         kp_sw -> ok;
         kp_s -> ok;
         kp_se -> ok;
-        _ -> console ! {msg, io_lib:format("~p",[Input])}
+        _ -> ru_console:msg(io_lib:format("~p",[Input]))
     end.
 

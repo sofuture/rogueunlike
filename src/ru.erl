@@ -38,7 +38,7 @@ go() ->
     start_systems(),
     ru_console:create(6),
     ru_console:msg("Press Q to quit!"),
-    input ! {mode, {rogueunlike_input, game_mode}},
+    input ! {mode, {ru_input, game_mode}},
     world ! {init},
     world ! {database_test, go},
     world ! {redraw, init},

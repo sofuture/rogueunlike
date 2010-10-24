@@ -15,7 +15,7 @@
 -include("ru.hrl").
 
 -export([create/1, char_stats/1, redraw/1, msg/1, exit/1]).
--export([draw/1, get_choice/0, start/0]).
+-export([draw/1, get_choice/0, start/0, console_loop/1]).
 
 %% ============================================================================
 %% Application API
