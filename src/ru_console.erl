@@ -67,7 +67,7 @@ console_loop(Cons) ->
             {_, MaxX} = cecho:getmaxyx(),
             NewCons = Cons#console_state{width=MaxX, win=Win},
             draw_console(NewCons),
-            char ! {stats},
+            ru_char:draw_stats(),
             console_loop(NewCons);
 
         {msg, Text} ->

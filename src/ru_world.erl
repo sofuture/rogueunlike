@@ -16,14 +16,25 @@
 -include("cecho.hrl").
 -include("ru.hrl").
 
--export([world_loop/0]).
+-export([start/0, world_loop/1, database_test/0, redraw/1, init/0]).
 
 %% ============================================================================
 %% Module API
 %% ============================================================================
 
-world_loop() ->
-    world_loop(nil).
+start() ->
+    true = register(?MODULE,
+        spawn(?MODULE, world_loop, [nil])).
+
+database_test() ->
+    ?MODULE ! {database_test, test}.
+
+redraw(Reason) ->
+    ?MODULE ! {redraw, Reason}.
+
+init() ->
+    ?MODULE ! {init}.
+
 
 world_loop(State) ->
     receive
