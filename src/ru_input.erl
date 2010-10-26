@@ -14,23 +14,36 @@
 -include("cecho.hrl").
 -include("ru.hrl").
 
--export([input_loop/0, key_loop/1]).
--export([script_mode/2,game_mode/2]).
+-export([start/0,exit/1]).
+-export([set_mode/1, key_loop/1, redraw/1, input/1]).
+-export([script_mode/2, game_mode/2]).
+-export([recv_loop/2]).
 
 %% ============================================================================
 %% Module API
 %% ============================================================================
 
-input_loop() ->
-    true = register(keyreader, 
-        spawn(?MODULE, key_loop, [[]])),
-    
-    recv_loop(fun(_) -> ok end, #input{}).
+set_mode(Mode) ->
+    ?MODULE ! {mode, Mode}.
+
+redraw(Reason) ->
+    ?MODULE ! {redraw, Reason}.
+
+input(Input) ->
+    ?MODULE ! {input, Input}.
+
+exit(Reason) ->
+    ?MODULE ! {exit, Reason}.
 
 %% ============================================================================
 %% Internal Functions
 %% ============================================================================
 
+start() ->
+    true = register(keyreader, 
+        spawn(?MODULE, key_loop, [[]])),
+    true = register(?MODULE,
+        spawn(?MODULE, recv_loop, [fun(_) -> ok end, #input{}])).
 
 recv_loop(Mode, State) ->
     receive
@@ -80,7 +93,7 @@ key_loop(Buffer) ->
     end,
     case RetChar of 
         nil -> ok;
-        _ -> input ! {input, RetChar}
+        _ -> input(RetChar)
     end,
     key_loop(NewBuf).
 
@@ -90,13 +103,13 @@ key_loop(Buffer) ->
 
 script_mode(Input, _State) ->
     case Input of
-        $q -> main ! {exit, die};
+        $q -> ru:exit("Got exit message");
         _ -> script ! {dosomething, nil}
     end.
 
 game_mode(Input, _State) ->
     case Input of
-        $Q -> main ! {exit, die};
+        $Q -> ru:exit("Got exit message");
         kp_nw -> ok;
         kp_n -> ok;
         kp_ne -> ok;
