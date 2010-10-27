@@ -14,6 +14,7 @@
     ru_char,
     ru_input,
     ru_console,
+    ru_state,
     ru_util,
     ru_world
     ]},

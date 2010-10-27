@@ -60,6 +60,7 @@ main_loop() ->
         {redraw, Reason} ->
             ru_input:redraw(Reason),
             ru_world:redraw(Reason),
+            ru_world:hero_location(),
             ru_console:redraw(Reason),
             main_loop();
 
@@ -93,6 +94,7 @@ start_systems() ->
     ru_char:start(),
     ru_input:start(),
     ru_world:start(),
+    ru_state:start(),
 
 %    true = register(input,
 %        spawn(ru_input, input_loop, [])),

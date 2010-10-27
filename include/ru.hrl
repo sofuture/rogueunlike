@@ -42,3 +42,5 @@
 -define(WINDOW_BORDERS, $|, $|, $-, $-, $+, $+, $+, $+).
 
 -define(CONSOLE_BORDERS, $\s, $\s, $=, $\s, $=, $=, $\s, $\s).
+
+-define(PP(X), io_lib:format("~p", [X])).

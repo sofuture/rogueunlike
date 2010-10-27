@@ -101,6 +101,7 @@ static ErlDrvData start(ErlDrvPort port, char *command) {
   state *drvstate = (state *)driver_alloc(sizeof(state));
   drvstate->drv_port = port;
   set_port_control_flags(port, PORT_CONTROL_FLAG_BINARY);
+  flushinp();
   int i;
   for (i = 0; i < _MAXWINDOWS; i++)
     drvstate->win[i] = NULL;

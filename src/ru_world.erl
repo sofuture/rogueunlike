@@ -16,7 +16,7 @@
 -include("cecho.hrl").
 -include("ru.hrl").
 
--export([start/0, world_loop/1, database_test/0, redraw/1, init/0]).
+-export([start/0, world_loop/1, database_test/0, redraw/1, init/0, hero_location/0, get_square/1]).
 
 %% ============================================================================
 %% Module API
@@ -32,9 +32,15 @@ database_test() ->
 redraw(Reason) ->
     ?MODULE ! {redraw, Reason}.
 
+hero_location() ->
+    find_hero().
+
 init() ->
     ?MODULE ! {init}.
 
+get_square(Location) ->
+    [Sq] = mnesia:read(world, Location),
+    Sq.
 
 world_loop(State) ->
     receive
@@ -44,6 +50,10 @@ world_loop(State) ->
 
         {database_test, _} ->
             create_test_world(),
+            world_loop(State);
+
+        {find, hero} ->
+            find_hero(),
             world_loop(State);
 
         {redraw, _} ->
@@ -75,6 +85,15 @@ draw_world() ->
     lists:foreach(DrawF, World),
     cecho:refresh(),
     ok.
+
+find_hero() ->
+    Q = qlc:q([X#world.loc || 
+            X = #world{stuff=Stuff} <- mnesia:table(world),
+            proplists:get_bool(hero, Stuff)]),
+    F = fun() -> qlc:eval(Q) end,
+    {atomic, [{X,Y}]} = mnesia:transaction(F),
+    {X,Y}.
+
 
 square_char(Stuff) ->
     PriElement = fun(Elem) -> draw_pref(Elem) end,

@@ -68,9 +68,14 @@ recv_loop(Mode, State) ->
 key_loop(Buffer) ->
     cecho:noecho(),
     Char = cecho:getch(),
+    BufLen = length(Buffer),
+    if
+        BufLen > 10 -> NextBuf = [];
+        true -> NextBuf = Buffer
+    end,
     NewBuf = case Char of
         27 -> [27];
-        _ -> [Char | Buffer]
+        _ -> [Char | NextBuf]
     end,
     RetChar = case lists:reverse(NewBuf) of
         %% this is crazy but oh fuckin well amirite??
@@ -110,15 +115,11 @@ script_mode(Input, _State) ->
 game_mode(Input, _State) ->
     case Input of
         $Q -> ru:exit("Got exit message");
-        kp_nw -> ok;
-        kp_n -> ok;
-        kp_ne -> ok;
-        kp_w -> ok;
-        kp_center -> ok;
-        kp_e -> ok;
-        kp_sw -> ok;
-        kp_s -> ok;
-        kp_se -> ok;
-        _ -> ru_console:msg(io_lib:format("~p",[Input]))
+        Dir when Dir =:= kp_n orelse Dir =:= kp_s orelse Dir =:= kp_e orelse
+            Dir =:= kp_w orelse Dir =:= kp_nw orelse Dir =:= kp_ne orelse
+            Dir =:= kp_sw orelse Dir =:= kp_se ->
+                ru_state:move_hero(Dir);
+
+        _ -> ru_console:msg(?PP(Input))
     end.
 
