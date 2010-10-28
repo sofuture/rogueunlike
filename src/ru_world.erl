@@ -160,10 +160,10 @@ test_world() ->
     % 0  ########
     % 1  #......###
     % 2  ####.....#
-    % 3     #.....#
-    % 4     ##..###
-    % 5      #..#
-    % 6      ####
+    % 3     ###+###
+    % 4     #.....#
+    % 5     #.....#
+    % 6     #######
     [#world{loc={0,0}, stuff=[wall]},
     #world{loc={1,0}, stuff=[wall]},
     #world{loc={2,0}, stuff=[wall]},
@@ -172,6 +172,8 @@ test_world() ->
     #world{loc={5,0}, stuff=[wall]},
     #world{loc={6,0}, stuff=[wall]},
     #world{loc={7,0}, stuff=[wall]},
+    #world{loc={8,0}, stuff=[wall]},
+    #world{loc={9,0}, stuff=[wall]},
     #world{loc={0,1}, stuff=[wall]},
     #world{loc={1,1}, stuff=[hero, walkable]},
     #world{loc={2,1}, stuff=[walkable]},
@@ -179,8 +181,8 @@ test_world() ->
     #world{loc={4,1}, stuff=[walkable]},
     #world{loc={5,1}, stuff=[walkable]},
     #world{loc={6,1}, stuff=[walkable]},
-    #world{loc={7,1}, stuff=[wall]},
-    #world{loc={8,1}, stuff=[wall]},
+    #world{loc={7,1}, stuff=[walkable]},
+    #world{loc={8,1}, stuff=[walkable]},
     #world{loc={9,1}, stuff=[wall]},
     #world{loc={0,2}, stuff=[wall]},
     #world{loc={1,2}, stuff=[wall]},
@@ -193,27 +195,33 @@ test_world() ->
     #world{loc={8,2}, stuff=[walkable]},
     #world{loc={9,2}, stuff=[wall]},
     #world{loc={3,3}, stuff=[wall]},
-    #world{loc={4,3}, stuff=[walkable]},
-    #world{loc={5,3}, stuff=[walkable]},
-    #world{loc={6,3}, stuff=[walkable]},
-    #world{loc={7,3}, stuff=[walkable]},
-    #world{loc={8,3}, stuff=[walkable]},
+    #world{loc={4,3}, stuff=[wall]},
+    #world{loc={5,3}, stuff=[wall]},
+    #world{loc={6,3}, stuff=[door]},
+    #world{loc={7,3}, stuff=[wall]},
+    #world{loc={8,3}, stuff=[wall]},
     #world{loc={9,3}, stuff=[wall]},
     #world{loc={3,4}, stuff=[wall]},
-    #world{loc={4,4}, stuff=[wall]},
+    #world{loc={4,4}, stuff=[walkable]},
     #world{loc={5,4}, stuff=[walkable]},
     #world{loc={6,4}, stuff=[walkable]},
-    #world{loc={7,4}, stuff=[wall]},
-    #world{loc={8,4}, stuff=[wall]},
+    #world{loc={7,4}, stuff=[walkable]},
+    #world{loc={8,4}, stuff=[walkable]},
     #world{loc={9,4}, stuff=[wall]},
-    #world{loc={4,5}, stuff=[wall]},
+    #world{loc={3,5}, stuff=[wall]},
+    #world{loc={4,5}, stuff=[walkable]},
     #world{loc={5,5}, stuff=[walkable]},
     #world{loc={6,5}, stuff=[walkable]},
-    #world{loc={7,5}, stuff=[wall]},
+    #world{loc={7,5}, stuff=[walkable]},
+    #world{loc={8,5}, stuff=[walkable]},
+    #world{loc={9,5}, stuff=[wall]},
+    #world{loc={3,6}, stuff=[wall]},
     #world{loc={4,6}, stuff=[wall]},
     #world{loc={5,6}, stuff=[wall]},
     #world{loc={6,6}, stuff=[wall]},
-    #world{loc={7,6}, stuff=[wall]}].
+    #world{loc={7,6}, stuff=[wall]},
+    #world{loc={8,6}, stuff=[wall]},
+    #world{loc={9,6}, stuff=[wall]}].
 
 %% ============================================================================
 %% Mnesia management
@@ -263,6 +271,8 @@ draw_pref(Thing) ->
             {8, $U};
         walkable -> 
             {9, $.};
+        door ->
+            {10, $+};
         wall ->
             {10, $#};
         _ ->

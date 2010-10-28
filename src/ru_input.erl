@@ -118,6 +118,8 @@ game_mode(Input, _State) ->
             Dir =:= kp_w orelse Dir =:= kp_nw orelse Dir =:= kp_ne orelse
             Dir =:= kp_sw orelse Dir =:= kp_se ->
                 ru_state:move_hero(Dir);
+        Action when Action =:= $o orelse Action =:= $O ->
+            ru_console:msg("In which direction?");
 
         _ -> ru_console:msg(?PP(Input))
     end.
