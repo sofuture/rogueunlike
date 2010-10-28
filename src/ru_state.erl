@@ -35,7 +35,6 @@ state_loop(State) ->
             Caller ! move_hero(Direction),
             state_loop(State);
 
-
         {exit, _} -> 
             ok;
 
@@ -62,7 +61,18 @@ move_hero(Direction) ->
         kp_center -> {X, Y}
     end,
     Current = ru_world:get_square({X,Y}),
-    ru_console:msg(?PP([dude_at, {X,Y}])),
     Square = ru_world:get_square({DX,DY}),
-    ru_console:msg(?PP([dude_movin_to, {DX,DY}])),
+    case proplists:get_bool(walkable, Square#world.stuff) of 
+        true -> 
+            ru_world:save_square(Square#world { stuff = [hero | Square#world.stuff]}),
+            NotHero = fun(Elem) -> 
+                case Elem of
+                    hero -> false;
+                    _ -> true
+                end
+            end,
+            ru_world:save_square(Current#world { stuff = lists:filter(NotHero, Current#world.stuff)});
+        false -> ok
+    end,
+    ru_world:redraw(move),
     ok.

@@ -16,7 +16,7 @@
 -include("cecho.hrl").
 -include("ru.hrl").
 
--export([start/0, world_loop/1, database_test/0, redraw/1, init/0, hero_location/0, get_square/1]).
+-export([start/0, world_loop/1, database_test/0, redraw/1, init/0, hero_location/0, get_square/1, save_square/1]).
 
 %% ============================================================================
 %% Module API
@@ -108,6 +108,10 @@ find_hero() ->
     {atomic, [{X,Y}]} = mnesia:transaction(F),
     {X,Y}.
 
+save_square(Square) ->
+    Trans = fun() -> mnesia:write(Square) end,
+    {atomic, _} = mnesia:transaction(Trans),
+    Square.
 
 square_char(Stuff) ->
     PriElement = fun(Elem) -> draw_pref(Elem) end,
