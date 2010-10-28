@@ -58,12 +58,21 @@ die() ->
 main_loop() ->
     receive
         {redraw, Reason} ->
+            % only do the whole reinit curses thing on screen resize
+            case Reason of 
+                sigwinch ->
+                    cecho:endwin(),
+                    cecho:initscr(),
+                    cecho:erase(),
+                    cecho:refresh(),
+                    %% this is wonky, but looks much, much nicer
+                    ?MODULE ! {redraw, post_sigwinch}; 
+                _ -> ok
+            end,
             ru_input:redraw(Reason),
             ru_world:redraw(Reason),
             ru_console:redraw(Reason),
             main_loop();
-
-            %input !  world ! {redraw, sigwinch},
 
         {exit, _} ->
             die();
@@ -93,15 +102,11 @@ start_systems() ->
     ru_char:start(),
     ru_input:start(),
     ru_world:start(),
+    ru_state:start(),
+    start_self().
 
-%    true = register(input,
-%        spawn(ru_input, input_loop, [])),
-
-%    true = register(world,
-%        spawn(ru_world, world_loop, [])),
-
+start_self() ->
     spawn(?MODULE, resize_loop, []),
-
     true = register(?MODULE, self()),
     ok.
 
