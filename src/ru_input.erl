@@ -68,39 +68,20 @@ recv_loop(Mode, State) ->
 key_loop(Buffer) ->
     cecho:noecho(),
     Char = cecho:getch(),
-    BufLen = length(Buffer),
-    if
-        BufLen > 10 -> NextBuf = [];
-        true -> NextBuf = Buffer
-    end,
-    NewBuf = case Char of
-        27 -> [27];
-        _ -> [Char | NextBuf]
-    end,
-    RetChar = case lists:reverse(NewBuf) of
-        %% this is crazy but oh fuckin well amirite??
-        [27, 91, 49, 126] -> kp_nw;
-        [27, 91, 52, 126] -> kp_sw;
-        [27, 91, 53, 126] -> kp_ne;
-        [27, 91, 54, 126] -> kp_se;
-        [27, 91, 65] -> kp_n;
-        [27, 91, 66] -> kp_s;
-        [27, 91, 67] -> kp_e;
-        [27, 91, 68] -> kp_w;
-        [27, 91, 69] -> kp_center;
-        [27, 91, 49] -> nil;
-        [27, 91, 52] -> nil;
-        [27, 91, 53] -> nil;
-        [27, 91, 54] -> nil;
-        [27, 91] -> nil;
-        [27] -> nil;
-        _ -> Char
-    end,
-    case RetChar of 
-        nil -> ok;
-        _ -> input(RetChar)
-    end,
-    key_loop(NewBuf).
+%    RetChar = case Char of 
+%        262 -> kp_nw;
+%        259 -> kp_n;
+%        339 -> kp_ne;
+%        260 -> kp_w;
+%        350 -> kp_center;
+%        261 -> kp_e;
+%        360 -> kp_sw;
+%        258 -> kp_s;
+%        338 -> kp_se;
+%        Other -> Other
+%    end,
+    input(Char),
+    key_loop(Buffer).
 
 %% ============================================================================
 %% Input Modes

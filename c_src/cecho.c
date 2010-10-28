@@ -122,6 +122,51 @@ static void do_getch(ErlDrvData drvstate, ErlDrvEvent event) {
   keycode = getch();
   if(keycode == KEY_RESIZE) {
     encode_ok_reply(st, OK);
+  } else if (keycode == KEY_DOWN) {
+    tuple(&eixb, 2);
+    atom(&eixb, "getch", 5);
+    atom(&eixb, "kp_s", 4);
+    driver_output(st->drv_port, eixb.buff, eixb.index);
+  } else if (keycode == KEY_UP) {
+    tuple(&eixb, 2);
+    atom(&eixb, "getch", 5);
+    atom(&eixb, "kp_n", 4);
+    driver_output(st->drv_port, eixb.buff, eixb.index);
+  } else if (keycode == KEY_LEFT) {
+    tuple(&eixb, 2);
+    atom(&eixb, "getch", 5);
+    atom(&eixb, "kp_e", 4);
+    driver_output(st->drv_port, eixb.buff, eixb.index);
+  } else if (keycode == KEY_RIGHT) {
+    tuple(&eixb, 2);
+    atom(&eixb, "getch", 5);
+    atom(&eixb, "kp_w", 4);
+    driver_output(st->drv_port, eixb.buff, eixb.index);
+  } else if (keycode == KEY_A1 || keycode == KEY_HOME) {
+    tuple(&eixb, 2);
+    atom(&eixb, "getch", 5);
+    atom(&eixb, "kp_nw", 5);
+    driver_output(st->drv_port, eixb.buff, eixb.index);
+  } else if (keycode == KEY_A3 || keycode == KEY_PPAGE) {
+    tuple(&eixb, 2);
+    atom(&eixb, "getch", 5);
+    atom(&eixb, "kp_ne", 5);
+    driver_output(st->drv_port, eixb.buff, eixb.index);
+  } else if (keycode == KEY_B2) {
+    tuple(&eixb, 2);
+    atom(&eixb, "getch", 5);
+    atom(&eixb, "kp_center", 9);
+    driver_output(st->drv_port, eixb.buff, eixb.index);
+  } else if (keycode == KEY_C1 || keycode == KEY_END) {
+    tuple(&eixb, 2);
+    atom(&eixb, "getch", 5);
+    atom(&eixb, "kp_sw", 5);
+    driver_output(st->drv_port, eixb.buff, eixb.index);
+  } else if (keycode == KEY_C3 || keycode == KEY_NPAGE) {
+    tuple(&eixb, 2);
+    atom(&eixb, "getch", 5);
+    atom(&eixb, "kp_se", 5);
+    driver_output(st->drv_port, eixb.buff, eixb.index);
   } else {
     tuple(&eixb, 2);
     atom(&eixb, "getch", 5);
@@ -203,6 +248,8 @@ void do_endwin(state *st) {
 
 void do_initscr(state *st) {
   st->win[0] = (WINDOW *)initscr();
+  keypad(st->win[0], TRUE);
+  cbreak();
   driver_select(st->drv_port, (ErlDrvEvent)fileno(stdin), DO_READ, 1);
   if (st->win[0] == NULL) {
     encode_ok_reply(st, -1);

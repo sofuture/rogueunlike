@@ -49,7 +49,6 @@ state_loop(State) ->
 
 move_hero(Direction) ->
     ru_console:msg("moving"),
-    ru_console:msg(?PP(ru_world:hero_location())),
     {X, Y} = ru_world:hero_location(),
     {DX, DY} = case Direction of
         kp_n -> {X, Y-1};

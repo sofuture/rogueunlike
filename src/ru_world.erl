@@ -39,8 +39,13 @@ init() ->
     ?MODULE ! {init}.
 
 get_square(Location) ->
-    [Sq] = mnesia:read(world, Location),
-    Sq.
+    get_world_square(Location).
+%    ru_console:msg(?PP(Location)),
+%    ?MODULE ! {get_square, self(), Location},
+%    receive
+%        {ok, Square} -> Square;
+%        _ -> nil
+%    end.
 
 world_loop(State) ->
     receive
@@ -58,6 +63,10 @@ world_loop(State) ->
 
         {redraw, _} ->
             draw_world(),
+            world_loop(State);
+
+        {get_square, Caller, Location} ->
+            Caller ! get_world_square(Location),
             world_loop(State);
 
         {exit, _} ->
@@ -85,6 +94,11 @@ draw_world() ->
     lists:foreach(DrawF, World),
     cecho:refresh(),
     ok.
+
+get_world_square(Location) ->
+    Trans = fun() -> mnesia:read(world, Location) end,
+    {atomic, [Square]} = mnesia:transaction(Trans),
+    Square.
 
 find_hero() ->
     Q = qlc:q([X#world.loc || 
