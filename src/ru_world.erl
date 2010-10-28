@@ -16,7 +16,11 @@
 -include("cecho.hrl").
 -include("ru.hrl").
 
--export([start/0, world_loop/1, database_test/0, redraw/1, init/0, hero_location/0, get_square/1, save_square/1]).
+-export([start/0, world_loop/1, database_test/0, redraw/1, init/0,
+         hero_location/0]).
+
+-export([square_has/2, square_add/2, square_sub/2, get_square/1, 
+         save_square/1]).
 
 %% ============================================================================
 %% Module API
@@ -33,19 +37,21 @@ redraw(Reason) ->
     ?MODULE ! {redraw, Reason}.
 
 hero_location() ->
-    find_hero().
+    ?MODULE ! {find_hero, self()},
+    receive
+        {ok, Location} -> Location;
+        _ -> nil
+    end.
 
 init() ->
     ?MODULE ! {init}.
 
 get_square(Location) ->
-    get_world_square(Location).
-%    ru_console:msg(?PP(Location)),
-%    ?MODULE ! {get_square, self(), Location},
-%    receive
-%        {ok, Square} -> Square;
-%        _ -> nil
-%    end.
+    ?MODULE ! {get_square, self(), Location},
+    receive
+        {ok, Square} -> Square;
+        _ -> nil
+    end.
 
 world_loop(State) ->
     receive
@@ -57,16 +63,16 @@ world_loop(State) ->
             create_test_world(),
             world_loop(State);
 
-        {find, hero} ->
-            find_hero(),
+        {find_hero, Caller} ->
+            Caller ! {ok, find_hero()},
             world_loop(State);
 
-        {redraw, _} ->
+        {redraw, _Reason} ->
             draw_world(),
             world_loop(State);
 
         {get_square, Caller, Location} ->
-            Caller ! get_world_square(Location),
+            Caller ! {ok, get_world_square(Location)},
             world_loop(State);
 
         {exit, _} ->
@@ -101,12 +107,12 @@ get_world_square(Location) ->
     Square.
 
 find_hero() ->
-    Q = qlc:q([X#world.loc || 
+    Q = qlc:q([X || 
             X = #world{stuff=Stuff} <- mnesia:table(world),
             proplists:get_bool(hero, Stuff)]),
     F = fun() -> qlc:eval(Q) end,
-    {atomic, [{X,Y}]} = mnesia:transaction(F),
-    {X,Y}.
+    {atomic, [Square]} = mnesia:transaction(F),
+    Square.
 
 save_square(Square) ->
     Trans = fun() -> mnesia:write(Square) end,
@@ -131,7 +137,16 @@ bounding_dimensions(World) ->
     MaxX = lists:max(lists:map(FXs, World)),
     MaxY = lists:max(lists:map(FYs, World)),
     {MaxX + 1, MaxY + 1}.
-    
+
+square_has(Square, Thing) ->
+    proplists:get_bool(Thing, Square#world.stuff).
+
+square_add(Square, Thing) ->
+    Square#world{ stuff = [Thing | Square#world.stuff]}.
+
+square_sub(Square, Thing) ->
+    NotThing = fun(Elem) -> case Elem of Thing -> false; _ -> true end end,
+    Square#world{ stuff = lists:filter(NotThing, Square#world.stuff)}.
 
 create_test_world() ->
     Ins = fun(Elem) -> mnesia:write(Elem) end,

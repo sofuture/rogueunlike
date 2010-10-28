@@ -15,7 +15,7 @@
 -include("ru.hrl").
 
 -export([create/1, char_stats/1, redraw/1, msg/1, exit/1]).
--export([draw/1, get_choice/0, start/0, console_loop/1]).
+-export([start/0, console_loop/1]).
 
 %% ============================================================================
 %% Application API
@@ -58,9 +58,7 @@ console_loop(Cons) ->
             console_loop(Cons);
 
         {redraw, _Reason} ->
-            cecho:werase(Cons#console_state.win),
-            cecho:endwin(),
-            cecho:initscr(),
+            cecho:delwin(Cons#console_state.win),
             cecho:erase(),
             cecho:refresh(),
             Win = create_console(Cons#console_state.height),
@@ -82,41 +80,6 @@ console_loop(Cons) ->
         _ -> 
             console_loop(Cons)
     end.
-
-draw(MenuItems) ->
-    cecho:curs_set(?ceCURS_INVISIBLE),
-    {_MaxY, _MaxX} = cecho:getmaxyx(),
-
-    {MenuHeight, MenuWidth, StartY, StartX} = menu_coords(MenuItems),
-
-    %% create our window
-    Win = cecho:newwin(MenuHeight, MenuWidth, StartY, StartX),
-    cecho:wborder(Win, ?WINDOW_BORDERS),
-    cecho:wrefresh(Win),
-
-    %% print some diagnostics
-    cecho:move(0,1),
-    cecho:addstr(io_lib:format("Window (~p,~p) Menu (~p,~p) Start (~p,~p)",
-            [_MaxX, _MaxY, MenuWidth, MenuHeight, StartX, StartY])),
-
-    %% print the menu items
-    Print = fun(Elem) ->
-        {N, Text} = Elem,
-        ItemStr = io_lib:format("~p - ~s", [N, Text]),
-        cecho:mvwaddstr(Win, N, 1, ItemStr)
-    end,
-    lists:foreach(Print, MenuItems),
-    cecho:wrefresh(Win),
-    cecho:refresh(),
-
-    %% clean up
-    cecho:curs_set(?ceCURS_NORMAL),
-    Win.
-
-%% get menu choice
-
-get_choice() ->
-    cecho:getline().
 
 %% ============================================================================
 %% Internal Functions
@@ -169,31 +132,4 @@ draw_stats(Char, #console_state{
             cecho:wrefresh(Win),
             ok
     end.
-
-menu_coords(MenuItems) ->
-    MenuWidth = menu_width(MenuItems),
-    MenuHeight = menu_height(MenuItems),
-    {StartX, StartY} = ru_util:centering_coords(MenuWidth, MenuHeight),
-    {MenuHeight, MenuWidth, StartY, StartX}.
-
-menu_height(Items) ->
-    %% 2 spaces for borders
-    length(Items) + 2.
-
-menu_width(Items) ->
-    MaxLen = fun(Elem, Max) ->
-        {N, Text} = Elem,
-        %% this seems crazy but it's not (I SWEAR!!)
-        %%  X spaces for text length
-        %%  3 spaces for " - "
-        %%  X spaces for digit ("9" -> 1, "10" -> 2)
-        %%  1 space for rounding
-        LenText = length(Text) + 3 + (N div 10) + 1,
-        case LenText > Max of
-            true -> LenText;
-            false -> Max
-        end
-    end,
-    %% 2 spaces for borders
-    lists:foldl(MaxLen, 0, Items) + 2.
 

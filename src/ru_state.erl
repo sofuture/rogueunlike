@@ -20,6 +20,12 @@
 %% Module API
 %% ============================================================================
 
+move_hero(Direction) ->
+    ?MODULE ! {move_hero, self(), Direction},
+    receive 
+        ok -> ok;
+        _ -> error
+    end.
 
 %% ============================================================================
 %% Application Behavior
@@ -31,8 +37,8 @@ start() ->
 
 state_loop(State) ->
     receive
-        {move, {Caller, hero, Direction}} ->
-            Caller ! move_hero(Direction),
+        {move_hero, Caller, Direction} ->
+            Caller ! do_move_hero(Direction),
             state_loop(State);
 
         {exit, _} -> 
@@ -46,33 +52,16 @@ state_loop(State) ->
 %% Internal Functions
 %% ============================================================================
 
-move_hero(Direction) ->
-    ru_console:msg("moving"),
-    {X, Y} = ru_world:hero_location(),
-    {DX, DY} = case Direction of
-        kp_n -> {X, Y-1};
-        kp_s -> {X, Y+1};
-        kp_e -> {X+1, Y};
-        kp_w -> {X-1, Y};
-        kp_nw -> {X-1, Y-1};
-        kp_ne -> {X+1, Y-1};
-        kp_sw -> {X-1, Y+1};
-        kp_se -> {X+1, Y+1};
-        kp_center -> {X, Y}
-    end,
-    Current = ru_world:get_square({X,Y}),
+do_move_hero(Direction) ->
+    Current = ru_world:hero_location(),
+    {DX, DY} = ru_util:direction_coords(Current#world.loc, Direction),
     Square = ru_world:get_square({DX,DY}),
-    case proplists:get_bool(walkable, Square#world.stuff) of 
+    case ru_world:square_has(Square, walkable) of
         true -> 
-            ru_world:save_square(Square#world { stuff = [hero | Square#world.stuff]}),
-            NotHero = fun(Elem) -> 
-                case Elem of
-                    hero -> false;
-                    _ -> true
-                end
-            end,
-            ru_world:save_square(Current#world { stuff = lists:filter(NotHero, Current#world.stuff)});
-        false -> ok
+            ru_world:save_square(ru_world:square_add(Square, hero)),
+            ru_world:save_square(ru_world:square_sub(Current, hero));
+        false ->
+            ok
     end,
-    ru_world:redraw(move),
+    ru:redraw(move),
     ok.

@@ -203,7 +203,7 @@ void do_endwin(state *st) {
 
 void do_initscr(state *st) {
   st->win[0] = (WINDOW *)initscr();
-  cbreak();
+  keypad(st->win[0], TRUE);
   driver_select(st->drv_port, (ErlDrvEvent)fileno(stdin), DO_READ, 1);
   if (st->win[0] == NULL) {
     encode_ok_reply(st, -1);
