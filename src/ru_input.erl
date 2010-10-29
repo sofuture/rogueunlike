@@ -121,8 +121,9 @@ open_cmd_mode(Input, _State) ->
             Dir =:= kp_w orelse Dir =:= kp_nw orelse Dir =:= kp_ne orelse
             Dir =:= kp_sw orelse Dir =:= kp_se ->
                 case ru_state:open_door(Dir) of
-                    ok -> ru_console:msg("The door creaks open");
-                    error -> ru_console:msg("It won't budge")
+                    ok -> ru_console:msg("The door creaks open.");
+                    nodoor -> ru_console:msg("Yeah... I can't open that.");
+                    error -> ru_console:msg("It won't budge.")
                 end;
         _ -> ok
     end,

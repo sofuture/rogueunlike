@@ -31,6 +31,7 @@ open_door(Direction) ->
     ?MODULE ! {open_door, self(), Direction},
     receive 
         ok -> ok;
+        nodoor -> nodoor;
         _ -> error
     end.
 
@@ -63,14 +64,19 @@ state_loop(State) ->
 %% Internal Functions
 %% ============================================================================
 
+-define(HAS(A,B), ru_world:square_has(A,B)).
+-define(ADD(A,B), ru_world:square_add(A,B)).
+-define(SUB(A,B), ru_world:square_sub(A,B)).
+-define(SAVE(A), ru_world:save_square(A)).
+
 do_move_hero(Direction) ->
     Current = ru_world:hero_location(),
     {DX, DY} = ru_util:direction_coords(Current#world.loc, Direction),
     Square = ru_world:get_square({DX,DY}),
-    case ru_world:square_has(Square, walkable) of
+    case ?HAS(Square, walkable) of
         true -> 
-            ru_world:save_square(ru_world:square_add(Square, hero)),
-            ru_world:save_square(ru_world:square_sub(Current, hero));
+            ?SAVE(?ADD(Square, hero)),
+            ?SAVE(?SUB(Current, hero));
         false ->
             ok
     end,
@@ -81,12 +87,12 @@ do_open_door(Direction) ->
     Current = ru_world:hero_location(),
     {DX, DY} = ru_util:direction_coords(Current#world.loc, Direction),
     Square = ru_world:get_square({DX,DY}),
-    Ret = case ru_world:square_has(Square, door) of
-        true -> 
-            ru_world:save_square(ru_world:square_add(Square, [walkable, opendoor])),
+    Ret = case ?HAS(Square, door) of
+        true ->
+            ?SAVE(?ADD(?SUB(Square, door), [walkable, opendoor])),
             ok;
         false ->
-            error
+            nodoor
     end,
     ru:redraw(move),
     Ret.
