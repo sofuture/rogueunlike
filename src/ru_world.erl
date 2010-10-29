@@ -141,6 +141,11 @@ bounding_dimensions(World) ->
 square_has(Square, Thing) ->
     proplists:get_bool(Thing, Square#world.stuff).
 
+square_add(Square, []) ->
+    Square;
+square_add(Square, Things) when is_list(Things) ->
+    [Head|Tail] = Things,
+    square_add(square_add(Square, Head), Tail);
 square_add(Square, Thing) ->
     Square#world{ stuff = [Thing | Square#world.stuff]}.
 
@@ -268,13 +273,15 @@ draw_pref(Thing) ->
         hero ->
             {0, $@};
         fountain -> 
-            {8, $U};
+            {80, $U};
+        opendoor ->
+            {390, $|};
         walkable -> 
-            {9, $.};
+            {400, $.};
         door ->
-            {10, $+};
+            {500, $+};
         wall ->
-            {10, $#};
+            {1000, $#};
         _ ->
             {10000, $\s}
     end.

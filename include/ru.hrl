@@ -10,10 +10,6 @@
         height = 0, 
         width = 0}).
 
--record(input, {
-        flags = [],
-        buffer = []}).
-
 -record(world, {
         loc = nil,
         stuff = [],

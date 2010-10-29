@@ -14,7 +14,7 @@
 -include("cecho.hrl").
 -include("ru.hrl").
 
--export([start/0, state_loop/1, move_hero/1]).
+-export([start/0, state_loop/1, move_hero/1, open_door/1]).
 
 %% ============================================================================
 %% Module API
@@ -22,6 +22,13 @@
 
 move_hero(Direction) ->
     ?MODULE ! {move_hero, self(), Direction},
+    receive 
+        ok -> ok;
+        _ -> error
+    end.
+
+open_door(Direction) ->
+    ?MODULE ! {open_door, self(), Direction},
     receive 
         ok -> ok;
         _ -> error
@@ -39,6 +46,10 @@ state_loop(State) ->
     receive
         {move_hero, Caller, Direction} ->
             Caller ! do_move_hero(Direction),
+            state_loop(State);
+
+        {open_door, Caller, Direction} ->
+            Caller ! do_open_door(Direction),
             state_loop(State);
 
         {exit, _} -> 
@@ -65,3 +76,17 @@ do_move_hero(Direction) ->
     end,
     ru:redraw(move),
     ok.
+
+do_open_door(Direction) ->
+    Current = ru_world:hero_location(),
+    {DX, DY} = ru_util:direction_coords(Current#world.loc, Direction),
+    Square = ru_world:get_square({DX,DY}),
+    Ret = case ru_world:square_has(Square, door) of
+        true -> 
+            ru_world:save_square(ru_world:square_add(Square, [walkable, opendoor])),
+            ok;
+        false ->
+            error
+    end,
+    ru:redraw(move),
+    Ret.

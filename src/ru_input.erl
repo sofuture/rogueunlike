@@ -19,6 +19,10 @@
 -export([script_mode/2, game_mode/2]).
 -export([recv_loop/2]).
 
+-record(input, {
+        flags = [],
+        buffer = []}).
+
 %% ============================================================================
 %% Module API
 %% ============================================================================
@@ -111,15 +115,32 @@ script_mode(Input, _State) ->
         _ -> script ! {dosomething, nil}
     end.
 
+open_cmd_mode(Input, _State) ->
+    case Input of
+        Dir when Dir =:= kp_n orelse Dir =:= kp_s orelse Dir =:= kp_e orelse
+            Dir =:= kp_w orelse Dir =:= kp_nw orelse Dir =:= kp_ne orelse
+            Dir =:= kp_sw orelse Dir =:= kp_se ->
+                case ru_state:open_door(Dir) of
+                    ok -> ru_console:msg("The door creaks open");
+                    error -> ru_console:msg("It won't budge")
+                end;
+        _ -> ok
+    end,
+    set_mode({ru_input, game_mode}).
+
 game_mode(Input, _State) ->
     case Input of
-        $Q -> ru:exit("Got exit message");
+        $Q -> 
+            ru:exit("Got exit message");
+
         Dir when Dir =:= kp_n orelse Dir =:= kp_s orelse Dir =:= kp_e orelse
             Dir =:= kp_w orelse Dir =:= kp_nw orelse Dir =:= kp_ne orelse
             Dir =:= kp_sw orelse Dir =:= kp_se ->
                 ru_state:move_hero(Dir);
+        
         Action when Action =:= $o orelse Action =:= $O ->
-            ru_console:msg("In which direction?");
+            ru_console:msg("In which direction?"),
+            set_mode(fun open_cmd_mode/2); 
 
         _ -> ru_console:msg(?PP(Input))
     end.
