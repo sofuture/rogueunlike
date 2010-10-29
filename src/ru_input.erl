@@ -71,39 +71,49 @@ recv_loop(Mode, State) ->
 
 key_loop(Buffer) ->
     cecho:noecho(),
-    Char = cecho:getch(),
-    RetChar = case Char of
+    input(cecho:getch()),
+    key_loop(Buffer).
+
+parse_direction(Char) ->
+    case Char of
         262 -> kp_nw;
+        $y -> kp_nw;
         $7 -> kp_nw;
 
         259 -> kp_n;
+        $k -> kp_n;
         $8 -> kp_n;
         
         339 -> kp_ne;
+        $u -> kp_ne;
         $9 -> kp_ne;
         
         260 -> kp_w;
+        $h -> kp_w;
         $4 -> kp_w;
         
         350 -> kp_center;
+        $. -> kp_center;
         $5 -> kp_center;
         
         261 -> kp_e;
+        $l -> kp_e;
         $6 -> kp_e;
         
         360 -> kp_sw;
+        $b -> kp_sw;
         $1 -> kp_sw;
         
         258 -> kp_s;
+        $j -> kp_s;
         $2 -> kp_s;
         
         338 -> kp_se;
+        $n -> kp_se;
         $3 -> kp_se;
         
         Other -> Other
-    end,
-    input(RetChar),
-    key_loop(Buffer).
+    end.
 
 %% ============================================================================
 %% Input Modes
@@ -116,7 +126,8 @@ script_mode(Input, _State) ->
     end.
 
 open_cmd_mode(Input, _State) ->
-    case Input of
+    DirInput = parse_direction(Input),
+    case DirInput of
         Dir when Dir =:= kp_n orelse Dir =:= kp_s orelse Dir =:= kp_e orelse
             Dir =:= kp_w orelse Dir =:= kp_nw orelse Dir =:= kp_ne orelse
             Dir =:= kp_sw orelse Dir =:= kp_se ->
@@ -130,7 +141,8 @@ open_cmd_mode(Input, _State) ->
     set_mode({ru_input, game_mode}).
 
 game_mode(Input, _State) ->
-    case Input of
+    DirInput = parse_direction(Input),
+    case DirInput of
         $Q -> 
             ru:exit("Got exit message");
 
@@ -143,6 +155,6 @@ game_mode(Input, _State) ->
             ru_console:msg("In which direction?"),
             set_mode(fun open_cmd_mode/2); 
 
-        _ -> ru_console:msg(?PP(Input))
+        _ -> ru_console:msg(?PP(DirInput))
     end.
 

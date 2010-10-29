@@ -153,6 +153,11 @@ square_add(Square, Things) when is_list(Things) ->
 square_add(Square, Thing) ->
     Square#world{ stuff = [Thing | Square#world.stuff]}.
 
+square_sub(Square, []) ->
+    Square;
+square_sub(Square, Things) when is_list(Things) ->
+    [Head|Tail] = Things,
+    square_sub(square_sub(Square, Head), Tail);
 square_sub(Square, Thing) ->
     NotThing = fun(Elem) -> case Elem of Thing -> false; _ -> true end end,
     Square#world{ stuff = lists:filter(NotThing, Square#world.stuff)}.
