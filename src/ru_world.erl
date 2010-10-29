@@ -332,7 +332,7 @@ room_with_door(X, Y, I, J, {DoorX, DoorY}) ->
     ].
 
 generate_test_world() ->
-    room_with_door(0, 0, 10, 10, {0, 5}).
+    generate_random_room_with_random_door(0,0).
     
 generate_random_world() ->
     'fucking i dono'.
@@ -345,7 +345,21 @@ generate_random_room(X, Y) ->
     J = random:uniform(10) + 2,
     room(X, Y, I, J).
 
-% 
-put_random_door(Room) ->
-    welp.
-    
+generate_random_room_with_random_door(X, Y) ->
+    {A1,A2,A3} = now(),
+    random:seed(A1, A2, A3), 
+    I = random:uniform(10) + 2,
+    J = random:uniform(10) + 2,
+    room_with_door(X, Y, I, J, generate_random_door_coordinates(X, Y, I, J)).
+   
+generate_random_door_coordinates(X, Y, I, J) ->
+    Top_bottom_bit = random:uniform(2) - 1,
+    Left_right_bit = random:uniform(2) - 1,
+    RandomXCoordinate = X + random:uniform(I - 2),
+    RandomYCoordinate = Y + random:uniform(J - 2),
+    case {Top_bottom_bit, Left_right_bit} of
+        {0, 0} -> {RandomXCoordinate, Y};
+        {0, 1} -> {RandomXCoordinate, Y + J - 1};
+        {1, 0} -> {X, RandomYCoordinate};
+        {1, 1} -> {X + I - 1, RandomYCoordinate}
+    end.
