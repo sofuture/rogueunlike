@@ -323,7 +323,7 @@ room(X, Y, I, J) ->
     row(X, Y + J - 1, I, [wall]) ++ % bottom
     col(X, Y + 1, J - 2, [wall]) ++ % left
     col(X + I - 1, Y + 1, J - 2, [wall]) ++ % right
-    grid(X + 1, Y + 1, X + I - 2, Y + J - 2, [walkable]).
+    grid(X + 1, Y + 1, I - 2, J - 2, [walkable]).
 
 room_with_door(X, Y, I, J, {DoorX, DoorY}) ->
     [#world{loc={DoorX, DoorY}, stuff=[door]} | 
