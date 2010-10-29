@@ -68,31 +68,42 @@ state_loop(State) ->
 -define(ADD(A,B), ru_world:square_add(A,B)).
 -define(SUB(A,B), ru_world:square_sub(A,B)).
 -define(SAVE(A), ru_world:save_square(A)).
+-define(GET(A), ru_world:get_square(A)).
+-define(GET(A,B), ru_world:get_square({A,B})).
 
 do_move_hero(Direction) ->
     Current = ru_world:hero_location(),
-    {DX, DY} = ru_util:direction_coords(Current#world.loc, Direction),
-    Square = ru_world:get_square({DX,DY}),
-    case ?HAS(Square, walkable) of
-        true -> 
-            ?SAVE(?ADD(Square, hero)),
-            ?SAVE(?SUB(Current, hero));
-        false ->
+    case Current of
+        nil -> ok;
+        _ ->
+            {DX, DY} = ru_util:direction_coords(Current#world.loc, Direction),
+            Square = ?GET({DX,DY}),
+            case ?HAS(Square, walkable) of
+                true -> 
+                    ?SAVE(?ADD(Square, hero)),
+                    ?SAVE(?SUB(Current, hero));
+                false ->
+                    ok
+            end,
+            ru:redraw(move),
             ok
-    end,
-    ru:redraw(move),
-    ok.
+    end.
 
 do_open_door(Direction) ->
     Current = ru_world:hero_location(),
-    {DX, DY} = ru_util:direction_coords(Current#world.loc, Direction),
-    Square = ru_world:get_square({DX,DY}),
-    Ret = case ?HAS(Square, door) of
-        true ->
-            ?SAVE(?ADD(?SUB(Square, door), [walkable, opendoor])),
-            ok;
-        false ->
-            nodoor
-    end,
-    ru:redraw(move),
-    Ret.
+    case Current of
+        nil -> ok;
+        _ ->
+            {DX, DY} = ru_util:direction_coords(Current#world.loc, Direction),
+            Square = ?GET({DX,DY}),
+            Ret = case ?HAS(Square, door) of
+                true ->
+                    ?SAVE(?ADD(?SUB(Square, door), [walkable, opendoor])),
+                    ok;
+                false ->
+                    nodoor
+            end,
+            ru:redraw(move),
+            Ret
+    end.
+

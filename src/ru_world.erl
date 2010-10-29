@@ -111,8 +111,12 @@ find_hero() ->
             X = #world{stuff=Stuff} <- mnesia:table(world),
             proplists:get_bool(hero, Stuff)]),
     F = fun() -> qlc:eval(Q) end,
-    {atomic, [Square]} = mnesia:transaction(F),
-    Square.
+    case mnesia:transaction(F) of
+        {atomic, [Square]} ->
+            Square;
+        _ ->
+            nil
+    end.
 
 save_square(Square) ->
     Trans = fun() -> mnesia:write(Square) end,
