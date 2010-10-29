@@ -319,14 +319,11 @@ grid(X, Y, I, J, Type) ->
 % x,y is the top left corner
 % i,j are the wall lengths
 room(X, Y, I, J) ->
-    room_coords({X,Y}, {X+I,Y+J}).
-
-room_coords({X, Y}, {I, J}) ->
-    row(X, Y, I - X + 1, [wall]) ++ % top
-    row(X, J, I - X + 1, [wall]) ++ % bottom
-    col(X, Y + 1, J - Y - 1, [wall]) ++ % left
-    col(I, Y + 1, J - Y - 1, [wall]) ++ % right
-    grid(X + 1, Y + 1, I - 1, J - 1, [walkable]).
+    row(X, Y, I, [wall]) ++ % top
+    row(X, Y + J - 1, I, [wall]) ++ % bottom
+    col(X, Y + 1, J - 2, [wall]) ++ % left
+    col(X + I - 1, Y + 1, J - 2, [wall]) ++ % right
+    grid(X + 1, Y + 1, X + I - 2, Y + J - 2, [walkable]).
 
 room_with_door(X, Y, I, J, {DoorX, DoorY}) ->
     [#world{loc={DoorX, DoorY}, stuff=[door]} | 
