@@ -231,7 +231,7 @@ test_world() ->
     #world{loc={7,6}, stuff=[wall]},
     #world{loc={8,6}, stuff=[wall]},
     #world{loc={9,6}, stuff=[wall]}],
-    generate_test_world().
+    A.
 
 %% ============================================================================
 %% Mnesia management
