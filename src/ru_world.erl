@@ -331,11 +331,79 @@ room_with_door(X, Y, I, J, {DoorX, DoorY}) ->
             World#world.loc /= {DoorX, DoorY}]
     ].
 
-generate_test_world() ->
-    generate_random_room_with_random_door(0,0).
+
+hallway({X1, Y1}, {X2, Y2}) when (Y1 == Y2) and (X2 > X1) ->
+    row(X1 + 1, Y1 - 1, (X2 - X1) - 1, [wall]) ++
+    row(X1 + 1, Y1,     (X2 - X1) - 1, [walkable]) ++
+    row(X1 + 1, Y1 + 1, (X2 - X1) - 1, [wall]);
+hallway({X1, Y1}, {X2, Y2}) when (Y1 == Y2) and (X1 > X2) ->
+    hallway({X2, Y1}, {X1, Y2});
+hallway({X1, Y1}, {X2, Y2}) when (X1 == X2) and (Y2 > Y1) ->
+    col(X1 - 1, Y1 + 1, (Y2 - Y1) - 1, [wall]) ++
+    col(X1,     Y1 + 1, (Y2 - Y1) - 1, [walkable]) ++
+    col(X1 + 1, Y1 + 1, (Y2 - Y1) - 1, [wall]);
+hallway({X1, Y1}, {X2, Y2}) when (X1 == X2) and (Y1 > Y2) ->
+    hallway({X1, Y2}, {X2, Y1});
+hallway({X1, Y1}, {X2, Y2}) when (X1 /= X2) and (Y1 /= Y2) ->
+    hallway({X1, Y1}, {X1, Y2}) ++
+    hallway({X1, Y2}, {X2, Y2}) ++
+    % this is just an elbow
+    room(X1, Y2, 2, 2).
     
-generate_random_world() ->
-    'fucking i dono'.
+
+generate_test_world() ->
+    Room1 = generate_random_room_with_random_door(0,0),
+    Room2 = generate_random_room_with_random_door(15,0),
+    Hallway = [],%%connect_rooms(Room1, Room2),
+    Room1 ++ Room2 ++ Hallway.
+
+connect_rooms(Room1, Room2) ->
+    %for now we know that room2 is right of room1
+    Room1_xyij = room_as_xyij(Room1),
+    Room2_xyij = room_as_xyij(Room2),
+    connect_room_xyijs(Room1_xyij, Room2_xyij).
+
+connect_room_xyijs({{R1X, R1Y}, {R1I, R1J}},
+                   {{R2X, R2Y}, {R2I, R2J}}) ->
+    % if we overlap in both x and y, we need overlap logic
+    % if we overlap in just x or just y, make a hallway
+    %for now we know that room2 is right of room1
+    RandomR1Coordinate = R1Y + random:uniform(R1J - 2),
+    RandomR2Coordinate = R2Y + random:uniform(R2J - 2),
+    hallway({R1X + R1I, RandomR1Coordinate},
+            {R2X, RandomR2Coordinate}).
+    
+
+
+room_as_xyij(Room) ->
+    FXs = fun(Elem) ->
+        {X, _} = Elem#world.loc,
+        X
+    end,
+    FYs = fun(Elem) ->
+        {_, Y} = Elem#world.loc,
+        Y
+    end,
+    MinX = lists:min(lists:map(FXs, Room)),
+    MinY = lists:min(lists:map(FYs, Room)),
+    MaxX = lists:max(lists:map(FXs, Room)),
+    MaxY = lists:max(lists:map(FYs, Room)),
+    {{MinX, MinY}, {MaxX - MinX, MaxY - MinY}}.
+    
+    
+
+%work in progress
+add_room_to_world(World) ->
+    % generate some random coordinates
+    {A1,A2,A3} = now(),
+    random:seed(A1, A2, A3), 
+    {MaxX, MaxY} = bounding_dimensions(World),
+    X = random:uniform(MaxX), % todo check if these need to be -1
+    Y = random:uniform(MaxY),
+    generate_random_room(X, Y).
+
+    
+
 
 % x and y are the coordinates of the top left corner
 % generates random coordinates for the bottom right
@@ -345,6 +413,7 @@ generate_random_room(X, Y) ->
     J = random:uniform(10) + 2,
     room(X, Y, I, J).
 
+%%%% random door stuff is probably totally unnecessary
 generate_random_room_with_random_door(X, Y) ->
     {A1,A2,A3} = now(),
     random:seed(A1, A2, A3), 
@@ -353,11 +422,11 @@ generate_random_room_with_random_door(X, Y) ->
     room_with_door(X, Y, I, J, generate_random_door_coordinates(X, Y, I, J)).
    
 generate_random_door_coordinates(X, Y, I, J) ->
-    Top_bottom_bit = random:uniform(2) - 1,
-    Left_right_bit = random:uniform(2) - 1,
+    XY_bit = random:uniform(2) - 1, %% x or y wall
+    NF_bit = random:uniform(2) - 1, %% near or far wall
     RandomXCoordinate = X + random:uniform(I - 2),
     RandomYCoordinate = Y + random:uniform(J - 2),
-    case {Top_bottom_bit, Left_right_bit} of
+    case {XY_bit, NF_bit} of
         {0, 0} -> {RandomXCoordinate, Y};
         {0, 1} -> {RandomXCoordinate, Y + J - 1};
         {1, 0} -> {X, RandomYCoordinate};
