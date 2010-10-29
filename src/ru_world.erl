@@ -169,7 +169,7 @@ test_world() ->
     % 4     #.....#
     % 5     #.....#
     % 6     #######
-    [#world{loc={0,0}, stuff=[wall]},
+    A = [#world{loc={0,0}, stuff=[wall]},
     #world{loc={1,0}, stuff=[wall]},
     #world{loc={2,0}, stuff=[wall]},
     #world{loc={3,0}, stuff=[wall]},
@@ -226,7 +226,8 @@ test_world() ->
     #world{loc={6,6}, stuff=[wall]},
     #world{loc={7,6}, stuff=[wall]},
     #world{loc={8,6}, stuff=[wall]},
-    #world{loc={9,6}, stuff=[wall]}].
+    #world{loc={9,6}, stuff=[wall]}],
+    generate_test_world().
 
 %% ============================================================================
 %% Mnesia management
@@ -290,33 +291,64 @@ draw_pref(Thing) ->
 %% Map Generation
 %% ============================================================================
 
-wall_across(X,Y,N) ->
-    [#world{loc={I,Y}, stuff=[wall]} || 
-        I <- lists:seq(X, X+N-1)].
-
-wall_down(X,Y,N) ->
-    [#world{loc={X,J}, stuff=[wall]} ||
-        J <- lists:seq(Y, Y+N-1)].
+%wall_across(X, Y, N) ->
+%    [#world{loc={I,Y}, stuff=[wall]} || 
+%        I <- lists:seq(X, X+N-1)].
+%
+%wall_down(X, Y, N) ->
+%    [#world{loc={X,J}, stuff=[wall]} ||
+%        J <- lists:seq(Y, Y+N-1)].
 
 row(X, Y, N, Type) ->
-    [#world{loc={I,Y}, stuff=[Type]} ||
+    [#world{loc={I,Y}, stuff=Type} ||
         I <- lists:seq(X, X+N-1)].
 
 col(X, Y, N, Type) ->
-    [#world{loc={X,J}, stuff=[Type]} ||
+    [#world{loc={X,J}, stuff=Type} ||
         J <- lists:seq(Y, Y+N-1)].
 
 %% *<* dalexander has joined channel #lmit
 %% <dalexander> grids?
-grid(X, Y, X, J, Type) ->
-    col(X, Y, J - Y + 1, Type);
+grid(X, Y, 1, J, Type) ->
+    col(X, Y, J, Type);
 grid(X, Y, I, J, Type) ->
-    col(X, Y, J - Y + 1, Type) ++
-    grid(X + 1, Y, I, J, Type).
+    col(X, Y, J, Type) ++
+    grid(X + 1, Y, I - 1, J, Type).
 
+% returns a list of world records
+% x,y is the top left corner
+% i,j are the wall lengths
 room(X, Y, I, J) ->
-    row(X, Y, I - X + 1, wall) ++ % top
-    row(X, J, I - X + 1, wall) ++ % bottom
-    col(X, Y + 1, J - Y - 1, wall) ++ % left
-    col(I, Y + 1, J - Y - 1, wall) ++ % right
-    grid(X + 1, Y + 1, I - 1, J - 1, walkable).
+    room_coords({X,Y}, {X+I,Y+J}).
+
+room_coords({X, Y}, {I, J}) ->
+    row(X, Y, I - X + 1, [wall]) ++ % top
+    row(X, J, I - X + 1, [wall]) ++ % bottom
+    col(X, Y + 1, J - Y - 1, [wall]) ++ % left
+    col(I, Y + 1, J - Y - 1, [wall]) ++ % right
+    grid(X + 1, Y + 1, I - 1, J - 1, [walkable]).
+
+room_with_door(X, Y, I, J, {DoorX, DoorY}) ->
+    [#world{loc={DoorX, DoorY}, stuff=[door]} | 
+        [World || World <- room(X, Y, I, J),
+            World#world.loc /= {DoorX, DoorY}]
+    ].
+
+generate_test_world() ->
+    room_with_door(0, 0, 10, 10, {0, 5}).
+    
+generate_random_world() ->
+    'fucking i dono'.
+
+% x and y are the coordinates of the top left corner
+% generates random coordinates for the bottom right
+% bottom right will be at least x + 2, y + 2
+generate_random_room(X, Y) ->
+    I = random:uniform(10) + 2,
+    J = random:uniform(10) + 2,
+    room(X, Y, I, J).
+
+% 
+put_random_door(Room) ->
+    welp.
+    
