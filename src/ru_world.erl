@@ -62,7 +62,7 @@ world_loop(State) ->
             init_db(),
             {MaxY, MaxX} = cecho:getmaxyx(),
             WinHeight = MaxY - (ConsHeight + 1),
-            Win = create_window(WinHeight),
+            Win = create_window(WinHeight, MaxX),
             world_loop(State#world_state{
                 win = Win, height = WinHeight, width = MaxX});
 
@@ -95,10 +95,9 @@ world_loop(State) ->
 %% Internal Functions
 %% ============================================================================
 
-create_window(Height) ->
+create_window(Height, Width) ->
     cecho:curs_set(?ceCURS_INVISIBLE),
-    {MaxY, MaxX} = cecho:getmaxyx(),
-    Win = cecho:newwin(Height, MaxX, 0, 0),
+    Win = cecho:newwin(Height, Width, 0, 0),
     cecho:wrefresh(Win),
     Win.
 
@@ -190,8 +189,8 @@ test_world() ->
     %
     % 0  ########
     % 1  #......###
-    % 2  ####.....#
-    % 3     ###+###
+    % 2  #........#
+    % 3  ######+###
     % 4     #.....#
     % 5     #.....#
     % 6     #######
@@ -216,15 +215,18 @@ test_world() ->
     #world{loc={8,1}, stuff=[walkable]},
     #world{loc={9,1}, stuff=[wall]},
     #world{loc={0,2}, stuff=[wall]},
-    #world{loc={1,2}, stuff=[wall]},
-    #world{loc={2,2}, stuff=[wall]},
-    #world{loc={3,2}, stuff=[wall]},
+    #world{loc={1,2}, stuff=[walkable]},
+    #world{loc={2,2}, stuff=[walkable]},
+    #world{loc={3,2}, stuff=[walkable]},
     #world{loc={4,2}, stuff=[walkable]},
     #world{loc={5,2}, stuff=[walkable]},
     #world{loc={6,2}, stuff=[walkable]},
     #world{loc={7,2}, stuff=[walkable]},
     #world{loc={8,2}, stuff=[walkable]},
     #world{loc={9,2}, stuff=[wall]},
+    #world{loc={0,3}, stuff=[wall]},
+    #world{loc={1,3}, stuff=[wall]},
+    #world{loc={2,3}, stuff=[wall]},
     #world{loc={3,3}, stuff=[wall]},
     #world{loc={4,3}, stuff=[wall]},
     #world{loc={5,3}, stuff=[wall]},
@@ -253,6 +255,7 @@ test_world() ->
     #world{loc={7,6}, stuff=[wall]},
     #world{loc={8,6}, stuff=[wall]},
     #world{loc={9,6}, stuff=[wall]}],
+    _B = generate_test_world(),
     A.
 
 %% ============================================================================
@@ -297,20 +300,27 @@ is_fresh_startup() ->
 
 draw_pref(Thing) ->
     case Thing of
+        
+        %% mobs
         hero ->
             {0, $@};
+
+        %% stuff
         fountain -> 
-            {80, $U};
+            {1000, $U};
         opendoor ->
-            {390, $|};
+            {1001, $|};
+
+        %% infrastructureystuff
         walkable -> 
-            {400, $.};
+            {4000, $.};
         door ->
-            {500, $+};
+            {5000, $+};
         wall ->
-            {1000, $#};
+            {6000, $#};
         _ ->
             {10000, $\s}
+
     end.
 
 %% ============================================================================
