@@ -40,3 +40,14 @@
 -define(CONSOLE_BORDERS, $\s, $\s, $=, $\s, $=, $=, $\s, $\s).
 
 -define(PP(X), io_lib:format("~p", [X])).
+-define(MSG(X), ru_console:msg(X)).
+
+-define(ISDIR(A), A =:= kp_n orelse 
+                  A =:= kp_s orelse 
+                  A =:= kp_e orelse
+                  A =:= kp_w orelse 
+                  A =:= kp_nw orelse 
+                  A =:= kp_ne orelse
+                  A =:= kp_sw orelse 
+                  A =:= kp_se).
+

@@ -125,20 +125,31 @@ script_mode(Input, _State) ->
         _ -> script ! {dosomething, nil}
     end.
 
+close_cmd_mode(Input, _State) ->
+    DirInput = parse_direction(Input),
+    case DirInput of
+        Dir when ?ISDIR(Dir) ->
+            case ru_state:close_door(Dir) of 
+                ok -> ?MSG("The door slams shut.");
+                nodoor -> ?MSG("Ain't nothin' to close there!");
+                error -> ?MSG("Try as you might, it won't close.")
+            end;
+        _ -> ok
+    end,
+    set_mode(fun game_mode/2).
+
 open_cmd_mode(Input, _State) ->
     DirInput = parse_direction(Input),
     case DirInput of
-        Dir when Dir =:= kp_n orelse Dir =:= kp_s orelse Dir =:= kp_e orelse
-            Dir =:= kp_w orelse Dir =:= kp_nw orelse Dir =:= kp_ne orelse
-            Dir =:= kp_sw orelse Dir =:= kp_se ->
-                case ru_state:open_door(Dir) of
-                    ok -> ru_console:msg("The door creaks open.");
-                    nodoor -> ru_console:msg("Yeah... I can't open that.");
-                    error -> ru_console:msg("It won't budge.")
-                end;
+        Dir when ?ISDIR(Dir) ->
+            case ru_state:open_door(Dir) of
+                ok -> ?MSG("The door creaks open.");
+                nodoor -> ?MSG("Yeah... I can't open that.");
+                error -> ?MSG("It won't budge.")
+            end;
         _ -> ok
     end,
-    set_mode({ru_input, game_mode}).
+    set_mode(fun game_mode/2).
 
 game_mode(Input, _State) ->
     DirInput = parse_direction(Input),
@@ -146,15 +157,17 @@ game_mode(Input, _State) ->
         $Q -> 
             ru:exit("Got exit message");
 
-        Dir when Dir =:= kp_n orelse Dir =:= kp_s orelse Dir =:= kp_e orelse
-            Dir =:= kp_w orelse Dir =:= kp_nw orelse Dir =:= kp_ne orelse
-            Dir =:= kp_sw orelse Dir =:= kp_se ->
-                ru_state:move_hero(Dir);
+        Dir when ?ISDIR(Dir) ->
+            ru_state:move_hero(Dir);
         
-        Action when Action =:= $o orelse Action =:= $O ->
-            ru_console:msg("In which direction?"),
-            set_mode(fun open_cmd_mode/2); 
+        Action when Action =:= $o ->
+            ?MSG("In which direction?"),
+            set_mode(fun open_cmd_mode/2);
 
-        _ -> ru_console:msg(?PP(DirInput))
+        Action when Action =:= $c ->
+            ?MSG("In which direction?"),
+            set_mode(fun close_cmd_mode/2);
+
+        _ -> ok
     end.
 
