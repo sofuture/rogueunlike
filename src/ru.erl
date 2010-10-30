@@ -36,10 +36,11 @@ stop(_) ->
 go() ->
     init(),
     start_systems(),
-    ru_console:create(6),
-    ru_console:msg("Press Q to quit!"),
+    ConsoleHeight = 6,
+    ru_console:create(ConsoleHeight),
+    ?MSG("Press Q to quit!"),
     ru_input:set_mode({ru_input, game_mode}),
-    ru_world:init(),
+    ru_world:init(ConsoleHeight),
     ru_world:database_test(),
     ru_world:redraw(init),
     main_loop().

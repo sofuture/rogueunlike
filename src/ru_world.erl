@@ -16,19 +16,14 @@
 -include("cecho.hrl").
 -include("ru.hrl").
 
--export([start/0, world_loop/1, database_test/0, redraw/1, init/0,
-         hero_location/0]).
+-export([start/0, world_loop/1, database_test/0, redraw/1, init/1]).
 
 -export([square_has/2, square_add/2, square_sub/2, get_square/1, 
-         save_square/1]).
+         save_square/1, hero_location/0]).
 
 %% ============================================================================
-%% Module API
+%% Application API
 %% ============================================================================
-
-start() ->
-    true = register(?MODULE,
-        spawn(?MODULE, world_loop, [nil])).
 
 database_test() ->
     ?MODULE ! {database_test, test}.
@@ -43,8 +38,8 @@ hero_location() ->
         _ -> nil
     end.
 
-init() ->
-    ?MODULE ! {init}.
+init(ConsHeight) ->
+    ?MODULE ! {init, ConsHeight}.
 
 get_square(Location) ->
     ?MODULE ! {get_square, self(), Location},
@@ -53,11 +48,23 @@ get_square(Location) ->
         _ -> nil
     end.
 
+%% ============================================================================
+%% Application Behavior
+%% ============================================================================
+
+start() ->
+    true = register(?MODULE,
+        spawn(?MODULE, world_loop, [#world_state{}])).
+
 world_loop(State) ->
     receive
-        {init} -> 
+        {init, ConsHeight} -> 
             init_db(),
-            world_loop(State);
+            {MaxY, MaxX} = cecho:getmaxyx(),
+            WinHeight = MaxY - (ConsHeight + 1),
+            Win = create_window(WinHeight),
+            world_loop(State#world_state{
+                win = Win, height = WinHeight, width = MaxX});
 
         {database_test, _} ->
             create_test_world(),
@@ -68,7 +75,9 @@ world_loop(State) ->
             world_loop(State);
 
         {redraw, _Reason} ->
-            draw_world(),
+            Win = State#world_state.win,
+            draw_world(Win),
+            cecho:wrefresh(Win),
             world_loop(State);
 
         {get_square, Caller, Location} ->
@@ -86,7 +95,14 @@ world_loop(State) ->
 %% Internal Functions
 %% ============================================================================
 
-draw_world() ->
+create_window(Height) ->
+    cecho:curs_set(?ceCURS_INVISIBLE),
+    {MaxY, MaxX} = cecho:getmaxyx(),
+    Win = cecho:newwin(Height, MaxX, 0, 0),
+    cecho:wrefresh(Win),
+    Win.
+
+draw_world(Win) ->
     Q = qlc:q([X || X <- mnesia:table(world)]),
     F = fun() -> qlc:eval(Q) end,
     {atomic, World} = mnesia:transaction(F),
@@ -95,9 +111,10 @@ draw_world() ->
     DrawF = fun(Spot) ->
         Char = square_char(Spot#world.stuff),
         {LocX, LocY} = Spot#world.loc,
-        cecho:mvaddch(DrawY+LocY, DrawX+LocX, Char)
+        cecho:mvwaddch(Win, DrawY+LocY, DrawX+LocX, Char)
     end,
     lists:foreach(DrawF, World),
+    cecho:wrefresh(Win),
     cecho:refresh(),
     ok.
 

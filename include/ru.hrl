@@ -3,6 +3,11 @@
 
 -record(level, {id, data}).
 
+-record(world_state, {
+        win = nil, 
+        height = 0, 
+        width = 0}).
+
 -record(console_state, {
         win = nil, 
         lines = [],
@@ -35,12 +40,17 @@
         turns = 0,
         attributes = #cattributes{}}).
 
--define(WINDOW_BORDERS, $|, $|, $-, $-, $+, $+, $+, $+).
+%% gui macros
 
+-define(WINDOW_BORDERS, $|, $|, $-, $-, $+, $+, $+, $+).
 -define(CONSOLE_BORDERS, $\s, $\s, $=, $\s, $=, $=, $\s, $\s).
+
+%% util macros
 
 -define(PP(X), io_lib:format("~p", [X])).
 -define(MSG(X), ru_console:msg(X)).
+
+%% input macros
 
 -define(ISDIR(A), A =:= kp_n orelse 
                   A =:= kp_s orelse 
