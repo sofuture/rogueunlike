@@ -11,4 +11,5 @@ Erlang R14A+ built from source is recommended.
 README
 =====
 make run -> profit
+
 make && ./run.escript -> profit
