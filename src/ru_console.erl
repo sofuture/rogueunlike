@@ -1,4 +1,6 @@
 %% ============================================================================
+%% Rogueunlike 0.30.0
+%%
 %% Copyright 2010 Jeff Zellner
 %%
 %% This software is provided with absolutely no assurances, guarantees, 

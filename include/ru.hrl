@@ -59,5 +59,6 @@
                   A =:= kp_nw orelse 
                   A =:= kp_ne orelse
                   A =:= kp_sw orelse 
-                  A =:= kp_se).
+                  A =:= kp_se orelse 
+                  A =:= kp_center).
 

@@ -1,4 +1,6 @@
 %% ============================================================================
+%% Rogueunlike 0.30.0
+%%
 %% Copyright 2010 Jeff Zellner
 %%
 %% This software is provided with absolutely no assurances, guarantees, 
@@ -133,7 +135,8 @@ close_cmd_mode(Input, _State) ->
                 ok -> ?MSG("The door slams shut.");
                 nodoor -> ?MSG("Ain't nothin' to close there!");
                 error -> ?MSG("Try as you might, it won't close.")
-            end;
+            end,
+            ru:tick();
         _ -> ok
     end,
     set_mode(fun game_mode/2).
@@ -146,7 +149,8 @@ open_cmd_mode(Input, _State) ->
                 ok -> ?MSG("The door creaks open.");
                 nodoor -> ?MSG("Yeah... I can't open that.");
                 error -> ?MSG("It won't budge.")
-            end;
+            end,
+            ru:tick();
         _ -> ok
     end,
     set_mode(fun game_mode/2).
@@ -158,7 +162,8 @@ game_mode(Input, _State) ->
             ru:exit("Got exit message");
 
         Dir when ?ISDIR(Dir) ->
-            ru_state:move_hero(Dir);
+            ru_state:move_hero(Dir),
+            ru:tick();
         
         Action when Action =:= $o ->
             ?MSG("In which direction?"),

@@ -1,4 +1,6 @@
 %% ============================================================================
+%% Rogueunlike 0.30.0
+%%
 %% Copyright 2010 Jeff Zellner
 %%
 %% This software is provided with absolutely no assurances, guarantees, 
@@ -15,9 +17,11 @@
 -include("cecho.hrl").
 -include("ru.hrl").
 
--export([start/2,stop/1]).
--export([go/0,die/0]).
--export([resize_loop/0,exit/1,redraw/1]).
+-export([start/2, stop/1]).
+-export([go/0, die/0]).
+-export([resize_loop/0, exit/1, redraw/1, tick/0]).
+
+-record(state, {turn=0}).
 
 %% ============================================================================
 %% Behaviour Callbacks
@@ -43,7 +47,7 @@ go() ->
     ru_world:init(ConsoleHeight),
     ru_world:database_test(),
     ru_world:redraw(init),
-    main_loop().
+    main_loop(#state{}).
 
 die() ->
     ru_console:exit(die),
@@ -56,8 +60,13 @@ die() ->
 %% Internal Functions
 %% ============================================================================
 
-main_loop() ->
+main_loop(State) ->
     receive
+        {tick, _} ->
+            ?MSG(io_lib:format("Turn ~p", [State#state.turn+1])),
+            ru_world:tick(),
+            main_loop(State#state{ turn=State#state.turn + 1});
+
         {redraw, Reason} ->
             % only do the whole reinit curses thing on screen resize
             case Reason of 
@@ -73,13 +82,17 @@ main_loop() ->
             ru_input:redraw(Reason),
             ru_world:redraw(Reason),
             ru_console:redraw(Reason),
-            main_loop();
+            main_loop(State);
 
         {exit, _} ->
             die();
+
         _ -> 
-            main_loop()
+            main_loop(State)
     end.
+
+tick() ->
+    ?MODULE ! {tick, tock}.
 
 redraw(Reason) ->
     ?MODULE ! {redraw, Reason}.

@@ -1,0 +1,9 @@
+% This is generated from src/rogueunlike.app.src
+{application, rogueunlike,
+ [{description, "entirely not exactly unlike a rogue"},
+  {vsn, "0.30.0"},
+  {modules, []},
+  {env, []},
+  {mod, {ru, []}}
+ ]}.
+

@@ -1,4 +1,6 @@
 %% ============================================================================
+%% Rogueunlike 0.30.0
+%%
 %% Copyright 2010 Jeff Zellner
 %%
 %% This software is provided with absolutely no assurances, guarantees, 
@@ -19,7 +21,7 @@
 -export([start/0, world_loop/1, database_test/0, redraw/1, init/1]).
 
 -export([square_has/2, square_add/2, square_sub/2, get_square/1, 
-         save_square/1, hero_location/0]).
+         save_square/1, hero_location/0, tick/0]).
 
 %% ============================================================================
 %% Application API
@@ -47,6 +49,9 @@ get_square(Location) ->
         {ok, Square} -> Square;
         _ -> nil
     end.
+
+tick() ->
+    ok.
 
 %% ============================================================================
 %% Application Behavior
@@ -206,7 +211,7 @@ test_world() ->
     #world{loc={9,0}, stuff=[wall]},
     #world{loc={0,1}, stuff=[wall]},
     #world{loc={1,1}, stuff=[hero, walkable]},
-    #world{loc={2,1}, stuff=[walkable]},
+    #world{loc={2,1}, stuff=[dog, walkable]},
     #world{loc={3,1}, stuff=[walkable]},
     #world{loc={4,1}, stuff=[walkable]},
     #world{loc={5,1}, stuff=[walkable]},
@@ -304,6 +309,8 @@ draw_pref(Thing) ->
         %% mobs
         hero ->
             {0, $@};
+        dog ->
+            {1, $d};
 
         %% stuff
         fountain -> 

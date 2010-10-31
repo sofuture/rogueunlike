@@ -9,44 +9,39 @@
 %% Do what thou wilt shall be the whole of the law.
 %% ============================================================================
 
--module(ru_util).
+-module(ru_mobs).
 
 -author("Jeff Zellner <jeff.zellner@gmail.com>").
 
 -include("cecho.hrl").
 -include("ru.hrl").
 
--export([get_window_dimensions/0, centering_coords/2, direction_coords/2]).
+-export([start/0]).
 
 %% ============================================================================
 %% Module API
 %% ============================================================================
 
-get_window_dimensions() ->
-    {Y, X} = cecho:getmaxyx(),
-    {X, Y}.
 
-centering_coords(Width, Height) ->
-    {MaxX, MaxY} = get_window_dimensions(),
-    X = (MaxX - Width) div 2,
-    Y = (MaxY - Height) div 2,
-    {X, Y}.
+%% ============================================================================
+%% Application Behavior
+%% ============================================================================
 
-direction_coords({X, Y} = _Location, Direction) ->
-    case Direction of
-        kp_n -> {X, Y-1};
-        kp_s -> {X, Y+1};
-        kp_e -> {X+1, Y};
-        kp_w -> {X-1, Y};
-        kp_nw -> {X-1, Y-1};
-        kp_ne -> {X+1, Y-1};
-        kp_sw -> {X-1, Y+1};
-        kp_se -> {X+1, Y+1};
-        kp_center -> {X, Y}
+start() ->
+    true = register(?MODULE,
+        spawn(?MODULE, state_loop, [[]])).
+
+state_loop(State) ->
+    receive
+
+        {exit, _} -> 
+            ok;
+
+        _ -> 
+            state_loop(State)
     end.
 
 %% ============================================================================
 %% Internal Functions
 %% ============================================================================
-
 
