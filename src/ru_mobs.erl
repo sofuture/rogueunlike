@@ -33,7 +33,13 @@ start() ->
 
 state_loop(State) ->
     receive
+        {tick, _} ->
+            tick(State),
+            state_loop(State);
 
+        {create, Mob} ->
+            state_loop([Mob | State]);
+        
         {exit, _} -> 
             ok;
 
@@ -44,4 +50,10 @@ state_loop(State) ->
 %% ============================================================================
 %% Internal Functions
 %% ============================================================================
+
+tick([]) ->
+    ok;
+tick([Head | Tail] = _MobList) ->
+    Head(tick),
+    tick(Tail).
 

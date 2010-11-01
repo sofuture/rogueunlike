@@ -6,6 +6,7 @@
 *.lo
 *.la
 *.m4
+*.app
 *.erl.swp
 *.in
 *~
