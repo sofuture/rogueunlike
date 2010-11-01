@@ -21,7 +21,7 @@
 -export([start/0, world_loop/1, database_test/0, redraw/1, init/1]).
 
 -export([square_has/2, square_add/2, square_sub/2, get_square/1, 
-         save_square/1, hero_location/0, tick/0]).
+         save_square/1, hero_location/0, tick/0, mob_location/1]).
 
 %% ============================================================================
 %% Application API
@@ -35,6 +35,13 @@ redraw(Reason) ->
 
 hero_location() ->
     ?MODULE ! {find_hero, self()},
+    receive
+        {ok, Location} -> Location;
+        _ -> nil
+    end.
+
+mob_location(MobRef) ->
+    ?MODULE ! {find_mob, self(), MobRef},
     receive
         {ok, Location} -> Location;
         _ -> nil
@@ -77,6 +84,10 @@ world_loop(State) ->
 
         {find_hero, Caller} ->
             Caller ! {ok, find_hero()},
+            world_loop(State);
+
+        {find_mob, Caller, MobRef} ->
+            Caller ! {ok, find_mob(MobRef)},
             world_loop(State);
 
         {redraw, _Reason} ->
@@ -133,10 +144,22 @@ find_hero() ->
             proplists:get_bool(hero, Stuff)]),
     F = fun() -> qlc:eval(Q) end,
     case mnesia:transaction(F) of
-        {atomic, [Square]} ->
-            Square;
-        _ ->
-            nil
+        {atomic, [Square]} -> Square;
+        _ -> nil
+    end.
+
+find_mob(MobRef) ->
+    FindRef = fun(Elem) -> Elem#mob.ref =:= MobRef end,
+    Q = qlc:q([X ||
+            X = #world{stuff=Stuff} <- mnesia:table(world),
+            case proplists:lookup_all(mob, Stuff) of
+                [] -> false;
+                List -> lists:any(FindRef, List)
+            end]),
+    F = fun() -> qlc:eval(Q) end,
+    case mnesia:transaction(F) of
+        {atomic, [Square]} -> Square;
+        _ -> nil
     end.
 
 save_square(Square) ->
@@ -163,6 +186,9 @@ bounding_dimensions(World) ->
     MaxY = lists:max(lists:map(FYs, World)),
     {MaxX + 1, MaxY + 1}.
 
+square_has(Square, Thing) when is_record(Thing, mob) ->
+    FindMe = fun(Elem) -> Thing#mob.ref =:= Elem#mob.ref end,
+    lists:any(FindMe, Square#world.stuff);
 square_has(Square, Thing) ->
     proplists:get_bool(Thing, Square#world.stuff).
 
@@ -180,7 +206,7 @@ square_sub(Square, Things) when is_list(Things) ->
     [Head|Tail] = Things,
     square_sub(square_sub(Square, Head), Tail);
 square_sub(Square, Thing) ->
-    NotThing = fun(Elem) -> case Elem of Thing -> false; _ -> true end end,
+    NotThing = fun(Elem) -> Elem =/= Thing end,
     Square#world{ stuff = lists:filter(NotThing, Square#world.stuff)}.
 
 create_test_world() ->
@@ -199,6 +225,7 @@ test_world() ->
     % 4     #.....#
     % 5     #.....#
     % 6     #######
+
     A = [#world{loc={0,0}, stuff=[wall]},
     #world{loc={1,0}, stuff=[wall]},
     #world{loc={2,0}, stuff=[wall]},
@@ -210,8 +237,8 @@ test_world() ->
     #world{loc={8,0}, stuff=[wall]},
     #world{loc={9,0}, stuff=[wall]},
     #world{loc={0,1}, stuff=[wall]},
-    #world{loc={1,1}, stuff=[hero, walkable]},
-    #world{loc={2,1}, stuff=[dog, walkable]},
+    #world{loc={1,1}, stuff=[walkable]},
+    #world{loc={2,1}, stuff=[walkable]},
     #world{loc={3,1}, stuff=[walkable]},
     #world{loc={4,1}, stuff=[walkable]},
     #world{loc={5,1}, stuff=[walkable]},
@@ -309,8 +336,15 @@ draw_pref(Thing) ->
         %% mobs
         hero ->
             {0, $@};
-        dog ->
-            {1, $d};
+
+        #mob{} = MobRec ->
+            Type = MobRec#mob.type,
+            case Type of
+                dog ->
+                    {1, $d};
+                _ ->
+                    {1, $?}
+            end;
 
         %% stuff
         fountain -> 

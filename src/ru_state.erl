@@ -17,18 +17,26 @@
 -include("ru.hrl").
 
 -export([start/0, state_loop/1]).
--export([move_hero/1, open_door/1, close_door/1]).
+-export([move/2, open_door/1, close_door/1, add_mob/3, add_hero/1]).
 
 %% ============================================================================
 %% Module API
 %% ============================================================================
 
-move_hero(Direction) ->
-    ?MODULE ! {move_hero, self(), Direction},
-    receive 
-        ok -> ok;
-        _ -> error
-    end.
+add_mob(Type, Location, Func) ->
+    ?MODULE ! {add, self(), Type, Location, Func},
+    ?WAITFOROK.
+
+add_hero(Location) ->
+    ?MODULE ! {add, self(), hero, Location},
+    ?WAITFOROK.
+
+move(Ref, Direction) when is_reference(Ref) ->
+    ?MODULE ! {move, self(), Ref, Direction},
+    ?WAITFOROK;
+move(hero, Direction) ->
+    ?MODULE ! {move, self(), hero, Direction},
+    ?WAITFOROK.
 
 open_door(Direction) ->
     ?MODULE ! {open_door, self(), Direction},
@@ -56,8 +64,20 @@ start() ->
 
 state_loop(State) ->
     receive
-        {move_hero, Caller, Direction} ->
-            Caller ! do_move_hero(Direction),
+        {add, Caller, hero, Location} ->
+            Caller ! do_add_hero(Location),
+            state_loop(State);
+
+        {add, Caller, Type, Location, Func} ->
+            Caller ! do_add_mob(Type, Location, Func),
+            state_loop(State);
+
+        {move, Caller, hero, Direction} ->
+            Caller ! do_move(hero, Direction),
+            state_loop(State);
+
+        {move, Caller, Ref, Direction} ->
+            Caller ! do_move(Ref, Direction),
             state_loop(State);
 
         {open_door, Caller, Direction} ->
@@ -86,22 +106,61 @@ state_loop(State) ->
 -define(GET(A), ru_world:get_square(A)).
 -define(GET(A,B), ru_world:get_square({A,B})).
 
-do_move_hero(Direction) ->
+do_add_hero(Location) ->
+    Square = ?GET(Location),
+    ?SAVE(?ADD(Square, hero)),
+    ok.
+
+do_add_mob(Type, Location, Func) ->
+    Square = ?GET(Location),
+    Ref = erlang:make_ref(),
+    Mob = #mob{type=Type, ref=Ref, func=Func}, 
+    ru_mobs:add(Mob),
+    ?SAVE(?ADD(Square, Mob)),
+    ok.
+
+do_move(Ref, Direction) when is_reference(Ref) ->
+    Current = ru_world:mob_location(Ref),
+    FindMe = fun(Elem) ->
+        case is_record(Elem, mob) of
+            true -> Elem#mob.ref =:= Ref;
+            _ -> false
+        end
+    end,
+    [Mob] = lists:filter(FindMe, Current#world.stuff),
+    case Current of 
+        nil -> ok;
+        _ ->
+            {DX, DY} = ru_util:direction_coords(Current#world.loc, Direction),
+            Square = ?GET({DX,DY}),
+            Res = case ?HAS(Square, walkable) of
+                true -> 
+                    ?SAVE(?ADD(Square, Mob)),
+                    ?SAVE(?SUB(Current, Mob)),
+                    ok;
+                false ->
+                    error
+            end,
+            ru:redraw(move),
+            Res
+    end;
+do_move(hero, Direction) ->
     Current = ru_world:hero_location(),
     case Current of
         nil -> ok;
         _ ->
             {DX, DY} = ru_util:direction_coords(Current#world.loc, Direction),
             Square = ?GET({DX,DY}),
-            case ?HAS(Square, walkable) of
+            Res = case ?HAS(Square, walkable) of
                 true -> 
                     ?SAVE(?ADD(Square, hero)),
-                    ?SAVE(?SUB(Current, hero));
+                    ?SAVE(?SUB(Current, hero)),
+                    ok;
                 false ->
-                    ok
+                    error
             end,
             ru:redraw(move),
-            ok
+            Res
     end.
 
 do_open_door(Direction) ->

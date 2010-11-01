@@ -46,6 +46,8 @@ go() ->
     ru_input:set_mode({ru_input, game_mode}),
     ru_world:init(ConsoleHeight),
     ru_world:database_test(),
+    ru_state:add_hero({1,1}),
+    make_a_dog(),
     ru_world:redraw(init),
     main_loop(#state{}).
 
@@ -60,10 +62,14 @@ die() ->
 %% Internal Functions
 %% ============================================================================
 
+make_a_dog() ->
+    ru_state:add_mob(dog, {2,1}, fun dog_brain/2).
+
 main_loop(State) ->
     receive
         {tick, _} ->
             ?MSG(io_lib:format("Turn ~p", [State#state.turn+1])),
+            ru_mobs:tick(),
             ru_world:tick(),
             main_loop(State#state{ turn=State#state.turn + 1});
 
@@ -117,11 +123,51 @@ start_systems() ->
     ru_input:start(),
     ru_world:start(),
     ru_state:start(),
+    ru_mobs:start(),
     start_self().
 
 start_self() ->
     spawn(?MODULE, resize_loop, []),
     true = register(?MODULE, self()),
     ok.
+
+random_direction() ->
+    random:seed(now()),
+    Dirs = [kp_n, kp_s, kp_e, kp_w, kp_sw, kp_nw, kp_se, kp_ne],
+    lists:nth(random:uniform(length(Dirs)), Dirs).
+
+distance_between({X1, Y1}, {X2, Y2}) ->
+    math:sqrt(math:pow(X2-X1, 2) + math:pow(Y2-Y1, 2)).
+
+dog_brain(Event, Me) ->
+    case Event of 
+        tick ->
+            MyLoc = ru_world:mob_location(Me),
+            HeroLoc = ru_world:hero_location(),
+            {CX,CY} = MyLoc#world.loc,
+            {HX,HY} = HeroLoc#world.loc,
+            Distance = distance_between({CX,CY}, {HX,HY}),
+            if
+                Distance >= 3 ->
+                    DX = case HX - CX of
+                        0 -> 0; A when A >= 1 -> 1; A when A =< -1 -> -1
+                    end,
+                    DY = case HY - CY of
+                        0 -> 0; B when B >= 1 -> 1; B when B =< -1 -> -1
+                    end,
+                    Dir = ru_util:coordinate_delta_direction({DX,DY});
+
+                Distance < 3 ->
+                    Dir = random_direction()
+            end,
+            case ru_state:move(Me, Dir) of
+                error -> 
+                    ru_state:move(Me, random_direction());
+                ok -> ok
+            end;
+
+        _ -> ok
+    end.
+
 
 

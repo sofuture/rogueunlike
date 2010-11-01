@@ -3,6 +3,11 @@
 
 -record(level, {id, data}).
 
+-record(mob, {
+        type = nil,
+        ref = nil,
+        func = nil}).
+
 -record(world_state, {
         win = nil, 
         height = 0, 
@@ -61,4 +66,11 @@
                   A =:= kp_sw orelse 
                   A =:= kp_se orelse 
                   A =:= kp_center).
+
+-define(WAITFOROK, 
+    receive 
+        ok -> ok;
+        _ -> error
+    end).
+        
 

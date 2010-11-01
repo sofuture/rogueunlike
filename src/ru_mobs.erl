@@ -17,11 +17,18 @@
 -include("ru.hrl").
 
 -export([start/0]).
+-export([tick/0, add/1]).
 
 %% ============================================================================
 %% Module API
 %% ============================================================================
 
+tick() ->
+    ?MODULE ! {tick, tock}.
+
+add(#mob{} = Mob) ->
+    ?MODULE ! {add, self(), Mob},
+    ?WAITFOROK.
 
 %% ============================================================================
 %% Application Behavior
@@ -29,7 +36,7 @@
 
 start() ->
     true = register(?MODULE,
-        spawn(?MODULE, state_loop, [[]])).
+        spawn(fun() -> state_loop([]) end)).
 
 state_loop(State) ->
     receive
@@ -37,7 +44,8 @@ state_loop(State) ->
             tick(State),
             state_loop(State);
 
-        {create, Mob} ->
+        {add, Caller, Mob} ->
+            Caller ! ok,
             state_loop([Mob | State]);
         
         {exit, _} -> 
@@ -54,6 +62,10 @@ state_loop(State) ->
 tick([]) ->
     ok;
 tick([Head | Tail] = _MobList) ->
-    Head(tick),
+    F = Head#mob.func,
+    case F of
+        nil -> ok;
+        _ -> F(tick, Head#mob.ref)
+    end,
     tick(Tail).
 

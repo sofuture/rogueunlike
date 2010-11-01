@@ -17,6 +17,7 @@
 -include("ru.hrl").
 
 -export([get_window_dimensions/0, centering_coords/2, direction_coords/2]).
+-export([coordinate_delta_direction/1]).
 
 %% ============================================================================
 %% Module API
@@ -31,6 +32,19 @@ centering_coords(Width, Height) ->
     X = (MaxX - Width) div 2,
     Y = (MaxY - Height) div 2,
     {X, Y}.
+
+coordinate_delta_direction({X, Y}) ->
+    case {X,Y} of
+        {0, -1} -> kp_n;
+        {0, 1} -> kp_s;
+        {1, 0} -> kp_e;
+        {-1, 0} -> kp_w;
+        {-1, -1} -> kp_nw;
+        {1, -1} -> kp_ne;
+        {-1, 1} -> kp_sw;
+        {1, 1} -> kp_se;
+        {0, 0} -> kp_center
+    end.
 
 direction_coords({X, Y} = _Location, Direction) ->
     case Direction of

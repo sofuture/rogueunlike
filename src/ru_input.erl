@@ -162,8 +162,12 @@ game_mode(Input, _State) ->
             ru:exit("Got exit message");
 
         Dir when ?ISDIR(Dir) ->
-            ru_state:move_hero(Dir),
-            ru:tick();
+            case Dir of
+                kp_center -> ru:tick();
+                _ -> 
+                    ru_state:move(hero, Dir),
+                    ru:tick()
+            end;
         
         Action when Action =:= $o ->
             ?MSG("In which direction?"),
