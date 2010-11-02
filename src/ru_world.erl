@@ -93,7 +93,6 @@ world_loop(State) ->
         {redraw, _Reason} ->
             Win = State#world_state.win,
             draw_world(Win),
-            cecho:wrefresh(Win),
             world_loop(State);
 
         {get_square, Caller, Location} ->
@@ -130,7 +129,7 @@ draw_world(Win) ->
     end,
     lists:foreach(DrawF, World),
     cecho:wrefresh(Win),
-    cecho:refresh(),
+    %cecho:refresh(),
     ok.
 
 get_world_square(Location) ->

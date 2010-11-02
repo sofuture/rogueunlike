@@ -24,7 +24,8 @@
 %% ============================================================================
 
 tick() ->
-    ?MODULE ! {tick, tock}.
+    ?MODULE ! {tick, self()},
+    ?WAITFOROK.
 
 add(#mob{} = Mob) ->
     ?MODULE ! {add, self(), Mob},
@@ -40,8 +41,9 @@ start() ->
 
 state_loop(State) ->
     receive
-        {tick, _} ->
+        {tick, Caller} ->
             tick(State),
+            Caller ! ok,
             state_loop(State);
 
         {add, Caller, Mob} ->

@@ -151,16 +151,20 @@ do_move(hero, Direction) ->
         _ ->
             {DX, DY} = ru_util:direction_coords(Current#world.loc, Direction),
             Square = ?GET({DX,DY}),
-            Res = case ?HAS(Square, walkable) of
-                true -> 
-                    ?SAVE(?ADD(Square, hero)),
-                    ?SAVE(?SUB(Current, hero)),
-                    ok;
-                false ->
-                    error
-            end,
-            ru:redraw(move),
-            Res
+            case Square of
+                nil -> error;
+                _ -> 
+                    Res = case ?HAS(Square, walkable) of
+                        true -> 
+                            ?SAVE(?ADD(Square, hero)),
+                            ?SAVE(?SUB(Current, hero)),
+                            ok;
+                        false ->
+                            error
+                    end,
+                    ru:redraw(move),
+                    Res
+            end
     end.
 
 do_open_door(Direction) ->

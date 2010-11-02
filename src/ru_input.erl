@@ -157,6 +157,7 @@ open_cmd_mode(Input, _State) ->
 
 game_mode(Input, _State) ->
     DirInput = parse_direction(Input),
+    ?MSG(?PP(DirInput)),
     case DirInput of
         $Q -> 
             ru:exit("Got exit message");
