@@ -48,6 +48,7 @@ go() ->
     ru_world:database_test(),
     ru_state:add_hero({1,1}),
     make_a_dog(),
+    make_zombies(),
     ru_world:redraw(init),
     main_loop(#state{}).
 
@@ -64,6 +65,11 @@ die() ->
 
 make_a_dog() ->
     ru_state:add_mob(dog, {2,1}, fun dog_brain/2).
+
+make_zombies() ->
+    ru_state:add_mob(zombie, {15,5}, fun zombie_brain/2),
+    ru_state:add_mob(zombie, {15,6}, fun zombie_brain/2),
+    ru_state:add_mob(zombie, {19,5}, fun zombie_brain/2).
 
 main_loop(State) ->
     receive
@@ -145,6 +151,9 @@ random_direction(Not) ->
 
 distance_between({X1, Y1}, {X2, Y2}) ->
     math:sqrt(math:pow(X2-X1, 2) + math:pow(Y2-Y1, 2)).
+
+zombie_brain(Event, Me) ->
+    dog_brain(Event, Me).
 
 dog_brain(Event, Me) ->
     case Event of 

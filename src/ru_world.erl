@@ -287,7 +287,8 @@ test_world() ->
     #world{loc={8,6}, stuff=[wall]},
     #world{loc={9,6}, stuff=[wall]}],
     _B = generate_test_world(),
-    A.
+    C = room_with_door(9,0,20,10,{9,1}),
+    lists:append(A,C).
 
 %% ============================================================================
 %% Mnesia management
@@ -341,6 +342,8 @@ draw_pref(Thing) ->
             case Type of
                 dog ->
                     {1, $d};
+                zombie ->
+                    {1, $Z};
                 _ ->
                     {1, $?}
             end;
@@ -465,8 +468,6 @@ room_as_xyij(Room) ->
     MaxX = lists:max(lists:map(FXs, Room)),
     MaxY = lists:max(lists:map(FYs, Room)),
     {{MinX, MinY}, {MaxX - MinX, MaxY - MinY}}.
-    
-    
 
 %work in progress
 add_room_to_world(World) ->
@@ -477,9 +478,6 @@ add_room_to_world(World) ->
     X = random:uniform(MaxX), % todo check if these need to be -1
     Y = random:uniform(MaxY),
     generate_random_room(X, Y).
-
-    
-
 
 % x and y are the coordinates of the top left corner
 % generates random coordinates for the bottom right
