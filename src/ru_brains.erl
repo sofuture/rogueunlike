@@ -58,7 +58,6 @@ dog_brain(Event, Me) ->
         _ -> ok
     end.
 
-
 zombie_brain(Event, Me) ->
     case Event of 
         tick ->

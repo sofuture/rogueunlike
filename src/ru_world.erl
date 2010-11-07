@@ -139,7 +139,7 @@ find_hero() ->
     end.
 
 find_mob(MobRef) ->
-    FindRef = fun(Elem) -> 
+    FindMe = fun(Elem) ->
         case is_record(Elem, mob) of
             true -> Elem#mob.ref =:= MobRef;
             _ -> false
@@ -149,12 +149,12 @@ find_mob(MobRef) ->
             X = #world{stuff=Stuff} <- mnesia:table(world),
             case proplists:lookup_all(mob, Stuff) of
                 [] -> false;
-                List -> lists:any(FindRef, List)
+                List -> lists:any(FindMe, List)
             end]),
     F = fun() -> qlc:eval(Q) end,
     case mnesia:transaction(F) of
         {atomic, [Square]} -> 
-            [Mob] = lists:filter(FindRef, Square#world.stuff),
+            [Mob] = lists:filter(FindMe, Square#world.stuff),
             {Square, Mob};
         _ -> nil
     end.
