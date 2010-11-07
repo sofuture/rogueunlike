@@ -45,17 +45,13 @@
         turns = 0,
         attributes = #cattributes{}}).
 
-%% gui macros
+%% macros
 
 -define(WINDOW_BORDERS, $|, $|, $-, $-, $+, $+, $+, $+).
 -define(CONSOLE_BORDERS, $\s, $\s, $=, $\s, $=, $=, $\s, $\s).
 
-%% util macros
-
 -define(PP(X), io_lib:format("~p", [X])).
 -define(MSG(X), ru_console:msg(X)).
-
-%% input macros
 
 -define(ISDIR(A), A =:= kp_n orelse 
                   A =:= kp_s orelse 

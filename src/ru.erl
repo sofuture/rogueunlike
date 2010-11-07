@@ -47,6 +47,7 @@ go() ->
     ru_world:init(ConsoleHeight),
     ru_world:database_test(),
     ru_state:add_hero({1,1}),
+    make_hero(),
     make_a_dog(),
     make_zombies(),
     ru_world:redraw(init),
@@ -62,6 +63,11 @@ die() ->
 %% ============================================================================
 %% Internal Functions
 %% ============================================================================
+
+make_hero() ->
+    Char = #cstats{ name="Gravlax", gender=male, race="Troll",
+        level=1, gold=100, hp=20, hpmax=20},
+    ru_char:set_char(Char).
 
 make_a_dog() ->
     ru_state:add_mob(dog, {2,1}, fun ru_brains:dog_brain/2).
