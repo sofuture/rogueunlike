@@ -17,7 +17,7 @@
 -include("ru.hrl").
 
 -export([start/0, state_loop/1]).
--export([move/2, open_door/1, close_door/1, add_mob/3, add_hero/1]).
+-export([move/2, open_door/1, close_door/1, add_mob/3, add_hero/1, attack/2]).
 
 %% ============================================================================
 %% Module API
@@ -54,6 +54,14 @@ close_door(Direction) ->
         _ -> error
     end.
 
+attack(WhoRef, Direction) ->
+    ?MODULE ! {attack, self(), WhoRef, Direction},
+    receive
+        ok -> ok;
+        novictim -> novictim;
+        _ -> error
+    end.
+
 %% ============================================================================
 %% Application Behavior
 %% ============================================================================
@@ -86,6 +94,10 @@ state_loop(State) ->
         
         {close_door, Caller, Direction} ->
             Caller ! do_close_door(Direction),
+            state_loop(State);
+
+        {attack, Caller, WhoRef, Direction} ->
+            Caller ! do_attack(WhoRef, Direction),
             state_loop(State);
 
         {exit, _} -> 
@@ -196,3 +208,7 @@ do_close_door(Direction) ->
             Ret
     end.
 
+do_attack(WhoRef, Direction) ->
+    Direction,
+    WhoRef,
+    ok.
