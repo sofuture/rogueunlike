@@ -64,12 +64,12 @@ die() ->
 %% ============================================================================
 
 make_a_dog() ->
-    ru_state:add_mob(dog, {2,1}, fun dog_brain/2).
+    ru_state:add_mob(dog, {2,1}, fun ru_brains:dog_brain/2).
 
 make_zombies() ->
-    ru_state:add_mob(zombie, {15,5}, fun zombie_brain/2),
-    ru_state:add_mob(zombie, {15,6}, fun zombie_brain/2),
-    ru_state:add_mob(zombie, {19,5}, fun zombie_brain/2).
+    ru_state:add_mob(zombie, {15,5}, fun ru_brains:zombie_brain/2),
+    ru_state:add_mob(zombie, {15,6}, fun ru_brains:zombie_brain/2),
+    ru_state:add_mob(zombie, {19,5}, fun ru_brains:zombie_brain/2).
 
 main_loop(State) ->
     receive
@@ -136,62 +136,4 @@ start_self() ->
     spawn(?MODULE, resize_loop, []),
     true = register(?MODULE, self()),
     ok.
-
-random_direction() ->
-    random:seed(now()),
-    Dirs = [kp_n, kp_s, kp_e, kp_w, kp_sw, kp_nw, kp_se, kp_ne],
-    lists:nth(random:uniform(length(Dirs)), Dirs).
-
-random_direction(Not) ->
-    random:seed(now()),
-    Dirs = lists:filter(fun(Elem) -> Elem =/= Not end,
-        [kp_n, kp_s, kp_e, kp_w, kp_sw, kp_nw, kp_se, kp_ne]),
-    lists:nth(random:uniform(length(Dirs)), Dirs).
-
-
-distance_between({X1, Y1}, {X2, Y2}) ->
-    math:sqrt(math:pow(X2-X1, 2) + math:pow(Y2-Y1, 2)).
-
-zombie_brain(Event, Me) ->
-    dog_brain(Event, Me).
-
-dog_brain(Event, Me) ->
-    case Event of 
-        tick ->
-            MyLoc = ru_world:mob_location(Me),
-            HeroLoc = ru_world:hero_location(),
-            {CX,CY} = MyLoc#world.loc,
-            {HX,HY} = HeroLoc#world.loc,
-            Distance = distance_between({CX,CY}, {HX,HY}),
-            if
-                %% if hero is more than 3 away, move towards
-                Distance >= 3 ->
-                    DX = case HX - CX of
-                        0 -> 0; A when A >= 1 -> 1; A when A =< -1 -> -1
-                    end,
-                    DY = case HY - CY of
-                        0 -> 0; B when B >= 1 -> 1; B when B =< -1 -> -1
-                    end,
-                    Dir = ru_util:coordinate_delta_direction({DX,DY});
-
-                %% meander if close to hero
-                Distance < 3 ->
-                    Dir = random_direction()
-            end,
-
-            %% dont move on top of hero's square
-            case ru_util:direction_coords({CX,CY}, Dir) of
-                {HX, HY} -> ru_state:move(Me, random_direction(Dir));
-                _ ->
-                    case ru_state:move(Me, Dir) of
-                        error -> 
-                            ru_state:move(Me, random_direction());
-                        ok -> ok
-                    end
-            end;
-
-        _ -> ok
-    end.
-
-
 

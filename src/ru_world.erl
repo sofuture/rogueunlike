@@ -35,27 +35,18 @@ redraw(Reason) ->
 
 hero_location() ->
     ?MODULE ! {find_hero, self()},
-    receive
-        {ok, Location} -> Location;
-        _ -> nil
-    end.
+    ?WAITFORRET.
 
 mob_location(MobRef) ->
     ?MODULE ! {find_mob, self(), MobRef},
-    receive
-        {ok, Location} -> Location;
-        _ -> nil
-    end.
+    ?WAITFORRET.
 
 init(ConsHeight) ->
     ?MODULE ! {init, ConsHeight}.
 
 get_square(Location) ->
     ?MODULE ! {get_square, self(), Location},
-    receive
-        {ok, Square} -> Square;
-        _ -> nil
-    end.
+    ?WAITFORRET.
 
 tick() ->
     ok.
@@ -148,7 +139,12 @@ find_hero() ->
     end.
 
 find_mob(MobRef) ->
-    FindRef = fun(Elem) -> Elem#mob.ref =:= MobRef end,
+    FindRef = fun(Elem) -> 
+        case is_record(Elem, mob) of
+            true -> Elem#mob.ref =:= MobRef;
+            _ -> false
+        end
+    end,
     Q = qlc:q([X ||
             X = #world{stuff=Stuff} <- mnesia:table(world),
             case proplists:lookup_all(mob, Stuff) of
@@ -157,7 +153,9 @@ find_mob(MobRef) ->
             end]),
     F = fun() -> qlc:eval(Q) end,
     case mnesia:transaction(F) of
-        {atomic, [Square]} -> Square;
+        {atomic, [Square]} -> 
+            [Mob] = lists:filter(FindRef, Square#world.stuff),
+            {Square, Mob};
         _ -> nil
     end.
 
@@ -185,7 +183,8 @@ bounding_dimensions(World) ->
     MaxY = lists:max(lists:map(FYs, World)),
     {MaxX + 1, MaxY + 1}.
 
-square_has(Square, Thing) when is_record(Thing, mob) ->
+square_has(Square, Thing) when is_record(Thing, mob) 
+        andalso is_record(Square, world) ->
     FindMe = fun(Elem) -> Thing#mob.ref =:= Elem#mob.ref end,
     lists:any(FindMe, Square#world.stuff);
 square_has(Square, Thing) ->

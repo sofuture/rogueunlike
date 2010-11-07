@@ -72,5 +72,11 @@
         ok -> ok;
         _ -> error
     end).
+
+-define(WAITFORRET,
+    receive
+        {ok, Thing} -> Thing;
+        _ -> nil
+    end).
         
 

@@ -120,17 +120,8 @@ do_add_mob(Type, Location, Func) ->
     ok.
 
 do_move(Ref, Direction) when is_reference(Ref) ->
-    Current = ru_world:mob_location(Ref),
-    FindMe = fun(Elem) ->
-        case is_record(Elem, mob) of
-            true -> Elem#mob.ref =:= Ref;
-            _ -> false
-        end
-    end,
-    [Mob] = lists:filter(FindMe, Current#world.stuff),
-    case Current of 
-        nil -> ok;
-        _ ->
+    case ru_world:mob_location(Ref) of
+        {Current, Mob} ->
             {DX, DY} = ru_util:direction_coords(Current#world.loc, Direction),
             Square = ?GET({DX,DY}),
             Res = case ?HAS(Square, walkable) of
@@ -142,7 +133,9 @@ do_move(Ref, Direction) when is_reference(Ref) ->
                     error
             end,
             ru:redraw(move),
-            Res
+            Res;
+        nil -> 
+            ok
     end;
 do_move(hero, Direction) ->
     Current = ru_world:hero_location(),
