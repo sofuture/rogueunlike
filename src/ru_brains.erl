@@ -61,6 +61,7 @@ dog_brain(Event, Me) ->
 zombie_brain(Event, Me) ->
     case Event of 
         tick ->
+            random:seed(now()),
             {MyLoc, _} = ru_world:mob_location(Me),
             HeroLoc = ru_world:hero_location(),
             {CX,CY} = MyLoc#world.loc,
@@ -75,20 +76,32 @@ zombie_brain(Event, Me) ->
                     DY = case HY - CY of
                         0 -> 0; B when B >= 1 -> 1; B when B =< -1 -> -1
                     end,
-                    Dir = ru_util:coordinate_delta_direction({DX,DY});
+                    Dir = ru_util:coordinate_delta_direction({DX,DY}),
+                    DoMove = true;
 
                 %% meander if close to hero
-                Distance >= 7->
-                    Dir = random_direction()
+                Distance >= 7 ->
+                    case random:uniform(2) of
+                        1 -> 
+                            DoMove = false,
+                            Dir = nil;
+                        2 -> 
+                            DoMove = true,
+                            Dir = random_direction()
+                    end
             end,
             %% dont move on top of hero's square
-            case ru_util:direction_coords({CX,CY}, Dir) of
-                {HX, HY} -> ru_state:move(Me, random_direction(Dir));
-                _ ->
-                    case ru_state:move(Me, Dir) of
-                        error -> 
-                            ru_state:move(Me, random_direction());
-                        ok -> ok
+            case DoMove of
+                false -> ok;
+                true ->
+                    case ru_util:direction_coords({CX,CY}, Dir) of
+                        {HX, HY} -> ru_state:move(Me, random_direction(Dir));
+                        _ ->
+                            case ru_state:move(Me, Dir) of
+                                error -> 
+                                    ru_state:move(Me, random_direction());
+                                ok -> ok
+                            end
                     end
             end;
         _ -> ok
