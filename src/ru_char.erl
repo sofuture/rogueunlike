@@ -46,6 +46,7 @@ char_loop(Char) ->
             char_loop(Char);
 
         {char, NewChar} ->
+            ru_console:char_stats(NewChar),
             char_loop(NewChar);
 
         {exit, _} -> 
