@@ -56,7 +56,8 @@ dog_brain(Event, Me) ->
                     end
             end;
         _ -> ok
-    end.
+    end,
+    ru:redraw(brain).
 
 zombie_brain(Event, Me) ->
     case Event of 
@@ -105,7 +106,8 @@ zombie_brain(Event, Me) ->
                     end
             end;
         _ -> ok
-    end.
+    end,
+    ru:redraw(brain).
 
 %% ============================================================================
 %% Internal Functions

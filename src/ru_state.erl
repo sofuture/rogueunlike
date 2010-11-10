@@ -40,27 +40,15 @@ move(hero, Direction) ->
 
 open_door(Direction) ->
     ?MODULE ! {open_door, self(), Direction},
-    receive 
-        ok -> ok;
-        nodoor -> nodoor;
-        _ -> error
-    end.
+    ?WAITFORRET.
 
 close_door(Direction) ->
     ?MODULE ! {close_door, self(), Direction},
-    receive 
-        ok -> ok;
-        nodoor -> nodoor;
-        _ -> error
-    end.
+    ?WAITFORRET.
 
 attack(WhoRef, Direction) ->
     ?MODULE ! {attack, self(), WhoRef, Direction},
-    receive
-        ok -> ok;
-        novictim -> novictim;
-        _ -> error
-    end.
+    ?WAITFORRET.
 
 %% ============================================================================
 %% Application Behavior
@@ -187,7 +175,7 @@ do_open_door(Direction) ->
                     nodoor
             end,
             ru:redraw(move),
-            Ret
+            {ok, Ret}
     end.
 
 do_close_door(Direction) ->
@@ -205,10 +193,29 @@ do_close_door(Direction) ->
                     nodoor
             end,
             ru:redraw(move),
-            Ret
+            {ok, Ret}
     end.
 
+do_attack(hero, Direction) ->
+    do_rest_of_attack(ru_world:hero_location(), Direction);
 do_attack(WhoRef, Direction) ->
-    Direction,
-    WhoRef,
-    ok.
+    do_rest_of_attack(ru_world:mob_location(WhoRef), Direction).
+
+do_rest_of_attack(Current, Direction) ->
+    case Current of
+        nil -> ok;
+        _ ->
+            {DX, DY} = ru_util:direction_coords(Current#world.loc, Direction),            
+            Square = ?GET({DX,DY}),
+            FindMob = fun(Elem) -> is_record(Elem, mob) end,            
+            Ret = case lists:any(FindMob, Square#world.stuff) of
+                true ->
+                    ?MSG("MOB THERE"),
+                    ok;
+                false ->
+                    ?MSG("No mob there"),
+                    nomob
+            end,
+            ru:redraw(attack),
+            {ok, Ret}
+    end.

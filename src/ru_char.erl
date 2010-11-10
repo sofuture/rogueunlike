@@ -17,6 +17,7 @@
 -include("ru.hrl").
 
 -export([exit/1, draw_stats/0, set_char/1, start/0, char_loop/1, stat_line/1]).
+-export([add_item/1, remove_item/1]).
 
 %% ============================================================================
 %% Module API
@@ -30,6 +31,14 @@ set_char(Char) ->
 
 exit(Reason) ->
     ?MODULE ! {die, Reason}.
+
+add_item(Item) ->
+    ?MODULE ! {add, self(), Item},
+    ?WAITFORRET.
+
+remove_item(Item) ->
+    ?MODULE ! {remove, self(), Item},
+    ?WAITFORRET.
 
 %% ============================================================================
 %% Application Behavior
@@ -47,6 +56,16 @@ char_loop(Char) ->
 
         {char, NewChar} ->
             ru_console:char_stats(NewChar),
+            char_loop(NewChar);
+
+        {add, Caller, Item} ->
+            {NewChar, Ret} = do_add_item(Char, Item),
+            Caller ! Ret,
+            char_loop(NewChar);
+        
+        {remove, Caller, Item} ->
+            {NewChar, Ret} = do_remove_item(Char, Item),
+            Caller ! Ret,
             char_loop(NewChar);
 
         {exit, _} -> 
@@ -68,4 +87,18 @@ stat_line(Char) ->
     HpMax = Char#cstats.hpmax,
     Format = "~s the ~s (Lvl ~p) HP: ~p/~p",
     io_lib:format(Format, [Name, Race, Level, Hp, HpMax]).
+
+do_add_item(Char, Item) ->
+    {Char#cstats{ inventory = [Item | Char#cstats.inventory] }, ok}.
+
+do_remove_item(Char, Item) ->
+    Inv = Char#cstats.inventory,
+    case lists:member(Item, Inv) of
+        true ->
+            NotItem = fun(Elem) -> Elem =/= Item end,
+            {Char#cstats{ inventory = 
+                    lists:filter(NotItem, Char#cstats.inventory) }, ok};
+        _ -> {Char, notfound}
+    end.
+            
 

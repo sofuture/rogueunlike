@@ -127,6 +127,20 @@ script_mode(Input, _State) ->
         _ -> script ! {dosomething, nil}
     end.
 
+attack_cmd_mode(Input, _State) ->
+    DirInput = parse_direction(Input),
+    case DirInput of
+        Dir when ?ISDIR(Dir) ->
+            case ru_state:attack(hero, Dir) of 
+                ok -> ?MSG("Bam! Bang! Crash!");
+                nomob -> ?MSG("Woosh.");
+                nil -> ok
+            end,
+            ru:tick();
+        _ -> ok
+    end,
+    set_mode(fun game_mode/2).
+
 close_cmd_mode(Input, _State) ->
     DirInput = parse_direction(Input),
     case DirInput of
@@ -168,14 +182,24 @@ game_mode(Input, _State) ->
                     ru_state:move(hero, Dir),
                     ru:tick()
             end;
-        
-        Action when Action =:= $o ->
-            ?MSG("In which direction?"),
-            set_mode(fun open_cmd_mode/2);
 
-        Action when Action =:= $c ->
+        Action when
+                Action =:= $? ->
+            ?MSG(""),
+            ?MSG("==== HELP ===="),
+            ?MSG("Commands: ? - help, o - open, c -> close, a - attack"),
+            ?MSG("");
+
+        DirectedAction when 
+                DirectedAction =:= $o orelse
+                DirectedAction =:= $c orelse
+                DirectedAction =:= $a ->
             ?MSG("In which direction?"),
-            set_mode(fun close_cmd_mode/2);
+            case DirectedAction of
+                $o -> set_mode(fun open_cmd_mode/2);
+                $c -> set_mode(fun close_cmd_mode/2);
+                $a -> set_mode(fun attack_cmd_mode/2)
+            end;
 
         _ -> ok
     end.

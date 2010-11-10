@@ -43,6 +43,7 @@
         hpmax = 0,
         ac = 0,
         turns = 0,
+        inventory = [],
         attributes = #cattributes{}}).
 
 %% macros
