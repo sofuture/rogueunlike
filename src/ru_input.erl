@@ -183,12 +183,25 @@ game_mode(Input, _State) ->
                     ru:tick()
             end;
 
-        Action when
-                Action =:= $? ->
-            ?MSG(""),
-            ?MSG("==== HELP ===="),
-            ?MSG("Commands: ? - help, o - open, c -> close, a - attack"),
-            ?MSG("");
+        Action when Action =:= $? ->
+            Win = ru_menu:draw(ru_text:help_menu()),
+            CloseClosure = fun(_,_) ->
+                ru_menu:undraw(Win),
+                ru:redraw(menu),
+                set_mode(fun game_mode/2)
+            end,
+            ?MSG("Opening help... press every key to close"),
+            set_mode(CloseClosure);
+
+        Action when Action =:= $A ->
+            Win = ru_menu:draw(ru_text:about_menu()),
+            CloseClosure = fun(_,_) ->
+                ru_menu:undraw(Win),
+                ru:redraw(menu),
+                set_mode(fun game_mode/2)
+            end,
+            ?MSG("Opening about... press a key labeled 'Any' to close"),
+            set_mode(CloseClosure);
 
         DirectedAction when 
                 DirectedAction =:= $o orelse
