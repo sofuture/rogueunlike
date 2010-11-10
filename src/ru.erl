@@ -39,11 +39,12 @@ stop(_) ->
 
 go() ->
     init(),
+    splash_screen(),
     start_systems(),
     make_hero(),
     ConsoleHeight = 6,
     ru_console:create(ConsoleHeight),
-    ?MSG("Press Q to quit!"),
+    ?MSG("Press q to quit!"),
     ru_input:set_mode({ru_input, game_mode}),
     ru_world:init(ConsoleHeight),
     ru_world:database_test(),
@@ -125,6 +126,7 @@ resize_loop() ->
 
 init() ->
     application:start(rogueunlike),
+    cecho:noecho(),
     ok.
 
 start_systems() ->
@@ -139,5 +141,57 @@ start_systems() ->
 start_self() ->
     spawn(?MODULE, resize_loop, []),
     true = register(?MODULE, self()),
+    ok.
+
+spiral(X,Y, DX, DY, MinX, MinY, MaxX, MaxY) ->
+    cecho:mvaddch(Y,X,$=),
+    timer:sleep(1),
+    if
+        X =:= MaxX andalso DX =:= 1 ->
+            cecho:refresh(),
+            spiral(X, Y+1, 0, 1, MinX, MinY, MaxX-1, MaxY);
+        Y =:= MaxY andalso DY =:= 1 ->
+            cecho:refresh(),
+            spiral(X-1, Y, -1, 0, MinX, MinY, MaxX, MaxY-1);
+        X =:= MinX andalso DX =:= -1 ->
+            cecho:refresh(),
+            spiral(X, Y-1, 0, -1, MinX+1, MinY, MaxX, MaxY);
+        Y =:= MinY andalso DY =:= -1 ->
+            cecho:refresh(),
+            spiral(X+1, Y, 1, 0, MinX, MinY+1, MaxX, MaxY);
+        Y > MaxY+1 ->
+            cecho:refresh(),
+            ok;
+        true ->
+            spiral(X+DX, Y+DY, DX, DY, MinX, MinY, MaxX, MaxY)
+    end.
+
+fade_in_title(Title, MX, MY) ->
+    {CX,CY} = ru_util:centering_coords(length(Title), 1),
+    MapChars = fun(Char, Acc) ->
+        [{length(Acc), Char} | Acc]
+    end,
+    Mapped = lists:foldl(MapChars, [], Title),
+    Draw = fun({X, Char}) ->
+        cecho:move(CY - 2, CX + X),
+        cecho:vline($\s, 5),
+        cecho:mvaddch(CY, CX + X, Char),
+        cecho:refresh(),
+        timer:sleep(100)
+    end,
+    random:seed(now()),
+    Randomize = fun(_,_) ->
+        random:uniform(2) =:= 1
+    end,
+    lists:foreach(Draw, lists:sort(Randomize, Mapped)).
+
+splash_screen() ->
+    cecho:erase(),
+    cecho:curs_set(?ceCURS_INVISIBLE),
+    {MX,MY} = ru_util:get_window_dimensions(),
+    spiral(0, 0, 1, 0, 0, 0, MX-1, MY-1),
+    cecho:refresh(),
+    fade_in_title(" R O G U E U N L I K E ", MX, MY),
+    cecho:getch(),
     ok.
 

@@ -172,7 +172,7 @@ open_cmd_mode(Input, _State) ->
 game_mode(Input, _State) ->
     DirInput = parse_direction(Input),
     case DirInput of
-        $Q -> 
+        Key when Key =:= $q orelse Key =:= $Q ->
             ru:exit("Got exit message");
 
         Dir when ?ISDIR(Dir) ->
