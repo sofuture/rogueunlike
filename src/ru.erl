@@ -143,27 +143,28 @@ start_self() ->
     true = register(?MODULE, self()),
     ok.
 
-spiral(X,Y, DX, DY, MinX, MinY, MaxX, MaxY) ->
+spiral(X,Y, DX, DY, MinX, MinY, MaxX, MaxY, Acc) ->
     cecho:mvaddch(Y,X,$=),
-    timer:sleep(1),
+    Acc1 = case Acc of
+        5 -> 
+            timer:sleep(1),
+            cecho:refresh(),
+            0;
+        _ -> Acc + 1
+    end,
     if
         X =:= MaxX andalso DX =:= 1 ->
-            cecho:refresh(),
-            spiral(X, Y+1, 0, 1, MinX, MinY, MaxX-1, MaxY);
+            spiral(X, Y+1, 0, 1, MinX, MinY, MaxX-1, MaxY, Acc1);
         Y =:= MaxY andalso DY =:= 1 ->
-            cecho:refresh(),
-            spiral(X-1, Y, -1, 0, MinX, MinY, MaxX, MaxY-1);
+            spiral(X-1, Y, -1, 0, MinX, MinY, MaxX, MaxY-1, Acc1);
         X =:= MinX andalso DX =:= -1 ->
-            cecho:refresh(),
-            spiral(X, Y-1, 0, -1, MinX+1, MinY, MaxX, MaxY);
+            spiral(X, Y-1, 0, -1, MinX+1, MinY, MaxX, MaxY, Acc1);
         Y =:= MinY andalso DY =:= -1 ->
-            cecho:refresh(),
-            spiral(X+1, Y, 1, 0, MinX, MinY+1, MaxX, MaxY);
+            spiral(X+1, Y, 1, 0, MinX, MinY+1, MaxX, MaxY, Acc1);
         Y > MaxY+1 ->
-            cecho:refresh(),
             ok;
         true ->
-            spiral(X+DX, Y+DY, DX, DY, MinX, MinY, MaxX, MaxY)
+            spiral(X+DX, Y+DY, DX, DY, MinX, MinY, MaxX, MaxY, Acc1)
     end.
 
 fade_in_title(Title, MX, MY) ->
@@ -189,7 +190,7 @@ splash_screen() ->
     cecho:erase(),
     cecho:curs_set(?ceCURS_INVISIBLE),
     {MX,MY} = ru_util:get_window_dimensions(),
-    spiral(0, 0, 1, 0, 0, 0, MX-1, MY-1),
+    spiral(0, 0, 1, 0, 0, 0, MX-1, MY-1, 0),
     cecho:refresh(),
     fade_in_title(" R O G U E U N L I K E ", MX, MY),
     cecho:getch(),
