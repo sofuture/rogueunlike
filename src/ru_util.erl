@@ -24,8 +24,7 @@
 %% ============================================================================
 
 get_window_dimensions() ->
-    {Y, X} = cecho:getmaxyx(),
-    {X, Y}.
+    encurses:getmaxxy().
 
 centering_coords(Width, Height) ->
     {MaxX, MaxY} = get_window_dimensions(),

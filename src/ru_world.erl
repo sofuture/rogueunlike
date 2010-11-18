@@ -63,7 +63,7 @@ world_loop(State) ->
     receive
         {init, ConsHeight} -> 
             init_db(),
-            {MaxY, MaxX} = cecho:getmaxyx(),
+            {MaxX, MaxY} = encurses:getmaxxy(),
             WinHeight = MaxY - (ConsHeight + 1),
             Win = create_window(WinHeight, MaxX),
             world_loop(State#world_state{
@@ -102,9 +102,9 @@ world_loop(State) ->
 %% ============================================================================
 
 create_window(Height, Width) ->
-    cecho:curs_set(?ceCURS_INVISIBLE),
-    Win = cecho:newwin(Height, Width, 0, 0),
-    cecho:wrefresh(Win),
+    encurses:curs_set(?ceCURS_INVISIBLE),
+    Win = encurses:newwin(Height, Width, 0, 0),
+    encurses:refresh(Win),
     Win.
 
 draw_world(Win) ->
@@ -116,11 +116,10 @@ draw_world(Win) ->
     DrawF = fun(Spot) ->
         Char = square_char(Spot#world.stuff),
         {LocX, LocY} = Spot#world.loc,
-        cecho:mvwaddch(Win, DrawY+LocY, DrawX+LocX, Char)
+        encurses:mvwaddch(Win, DrawY+LocY, DrawX+LocX, Char)
     end,
     lists:foreach(DrawF, World),
-    cecho:wrefresh(Win),
-    %cecho:refresh(),
+    encurses:refresh(Win),
     ok.
 
 get_world_square(Location) ->

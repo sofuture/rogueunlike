@@ -17,7 +17,7 @@
 -include("ru.hrl").
 
 -export([start/0,exit/1]).
--export([set_mode/1, key_loop/1, redraw/1, input/1]).
+-export([set_mode/1, key_loop/0, redraw/1, input/1]).
 -export([script_mode/2, game_mode/2]).
 -export([recv_loop/2]).
 
@@ -46,10 +46,10 @@ exit(Reason) ->
 %% ============================================================================
 
 start() ->
-    true = register(keyreader, 
-        spawn(?MODULE, key_loop, [[]])),
+    %_KeyReader = spawn(?MODULE, key_loop, []),
+    %true = register(keyreader, _KeyReader),
     true = register(?MODULE,
-        spawn(?MODULE, recv_loop, [fun(_) -> ok end, #input{}])).
+        spawn(?MODULE, recv_loop, [fun(_,_) -> ok end, #input{}])).
 
 recv_loop(Mode, State) ->
     receive
@@ -71,10 +71,13 @@ recv_loop(Mode, State) ->
             recv_loop(Mode, State)
     end.
 
-key_loop(Buffer) ->
-    cecho:noecho(),
-    input(cecho:getch()),
-    key_loop(Buffer).
+key_loop() ->
+    %encurses:noecho(),
+    %Ch = encurses:getch(),
+    timer:sleep(1000),
+    Ch = $a,
+    input(Ch),
+    key_loop().
 
 parse_direction(Char) ->
     case Char of

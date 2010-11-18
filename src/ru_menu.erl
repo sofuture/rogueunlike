@@ -26,14 +26,14 @@ draw(Text) ->
     Width = menu_text_width(Text) + 2,
     Height = menu_text_height(Text) + 2,
     {CX,CY} = ru_util:centering_coords(Width, Height),
-    Win = cecho:newwin(Height, Width, CY, CX),
-    cecho:wborder(Win, ?WINDOW_BORDERS),
+    Win = encurses:newwin(Height, Width, CY, CX),
+    encurses:border(Win, ?WINDOW_BORDERS),
     Print = fun(Elem, Acc) ->
-        cecho:mvwaddstr(Win, Acc, 1, Elem),
+        encurses:mvwaddstr(Win, Acc, 1, Elem),
         Acc + 1
     end,
     lists:foldl(Print, 1, Text),
-    cecho:wrefresh(Win),
+    encurses:refresh(Win),
     Win.
 
 undraw(_Win) ->

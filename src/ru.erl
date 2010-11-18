@@ -13,25 +13,14 @@
 
 -author("Jeff Zellner <jeff.zellner@gmail.com>").
 
--behaviour(application).
 -include("cecho.hrl").
 -include("ru.hrl").
 
--export([start/2, stop/1]).
+%-export([start/2, stop/1]).
 -export([go/0, die/0]).
 -export([resize_loop/0, exit/1, redraw/1, tick/0]).
 
 -record(state, {turn=0}).
-
-%% ============================================================================
-%% Behaviour Callbacks
-%% ============================================================================
-
-start(_,_) ->
-    cecho_srv:start_link().
-
-stop(_) ->
-    ok.
 
 %% ============================================================================
 %% Module API
@@ -46,19 +35,18 @@ go() ->
     ru_console:create(ConsoleHeight),
     ?MSG("Press q to quit!"),
     ru_input:set_mode({ru_input, game_mode}),
-    ru_world:init(ConsoleHeight),
-    ru_world:database_test(),
-    ru_state:add_hero({1,1}),
-    make_dog(),
-    make_zombie(),
-    ru_world:redraw(init),
+    %ru_world:init(ConsoleHeight),
+    %ru_world:database_test(),
+    %ru_state:add_hero({1,1}),
+    %make_dog(),
+    %make_zombie(),
+    %ru_world:redraw(init),
     main_loop(#state{}).
 
 die() ->
     ru_console:exit(die),
     ru_char:exit(die),
     ru_input:exit(die),
-    application:stop(rogueunlike),
     halt().
 
 %% ============================================================================
@@ -85,19 +73,21 @@ main_loop(State) ->
             main_loop(State#state{ turn=State#state.turn + 1});
 
         {redraw, Reason} ->
+            encurses:mvaddch(5,5,$A),
+            encurses:refresh(),
             % only do the whole reinit curses thing on screen resize
             case Reason of 
                 sigwinch ->
-                    cecho:endwin(),
-                    cecho:initscr(),
-                    cecho:erase(),
-                    cecho:refresh(),
+                    encurses:endwin(),
+                    encurses:initscr(),
+                    encurses:erase(),
+                    encurses:refresh(),
                     %% this is wonky, but looks much, much nicer
                     ?MODULE ! {redraw, post_sigwinch}; 
                 _ -> ok
             end,
             ru_input:redraw(Reason),
-            ru_world:redraw(Reason),
+            %ru_world:redraw(Reason),
             ru_console:redraw(Reason),
             main_loop(State);
 
@@ -120,22 +110,22 @@ exit(Reason) ->
 % listen for SIGWINCH at window resize
 
 resize_loop() ->
-    cecho:sigwinch(),
+    encurses:sigwinch(),
     redraw(sigwinch),
     resize_loop().
 
 init() ->
-    application:start(rogueunlike),
-    cecho:noecho(),
+    encurses:initscr(),
+    encurses:noecho(),
     ok.
 
 start_systems() ->
     ru_console:start(),
     ru_char:start(),
     ru_input:start(),
-    ru_world:start(),
-    ru_state:start(),
-    ru_mobs:start(),
+    %ru_world:start(),
+    %ru_state:start(),
+    %ru_mobs:start(),
     start_self().
 
 start_self() ->
@@ -144,11 +134,11 @@ start_self() ->
     ok.
 
 spiral(X,Y, DX, DY, MinX, MinY, MaxX, MaxY, Acc) ->
-    cecho:mvaddch(Y,X,$=),
+    encurses:mvaddch(X,Y,$=),
     Acc1 = case Acc of
         5 -> 
             timer:sleep(1),
-            cecho:refresh(),
+            encurses:refresh(),
             0;
         _ -> Acc + 1
     end,
@@ -161,24 +151,24 @@ spiral(X,Y, DX, DY, MinX, MinY, MaxX, MaxY, Acc) ->
             spiral(X, Y-1, 0, -1, MinX+1, MinY, MaxX, MaxY, Acc1);
         Y =:= MinY andalso DY =:= -1 ->
             spiral(X+1, Y, 1, 0, MinX, MinY+1, MaxX, MaxY, Acc1);
-        Y > MaxY+1 ->
+        Y > MaxY+1 orelse X > MaxX+1 orelse X < -2 orelse Y < -2 ->
             ok;
         true ->
             spiral(X+DX, Y+DY, DX, DY, MinX, MinY, MaxX, MaxY, Acc1)
     end.
 
-fade_in_title(Title, MX, MY) ->
+fade_in_title(Title) ->
     {CX,CY} = ru_util:centering_coords(length(Title), 1),
     MapChars = fun(Char, Acc) ->
         [{length(Acc), Char} | Acc]
     end,
     Mapped = lists:foldl(MapChars, [], Title),
     Draw = fun({X, Char}) ->
-        cecho:move(CY - 2, CX + X),
-        cecho:vline($\s, 5),
-        cecho:mvaddch(CY, CX + X, Char),
-        cecho:refresh(),
-        timer:sleep(100)
+        encurses:move(CX+X, CY-2),
+        encurses:vline($\s, 5),
+        encurses:mvaddch(CX+X, CY, Char),
+        encurses:refresh(),
+        timer:sleep(10)
     end,
     random:seed(now()),
     Randomize = fun(_,_) ->
@@ -187,12 +177,14 @@ fade_in_title(Title, MX, MY) ->
     lists:foreach(Draw, lists:sort(Randomize, Mapped)).
 
 splash_screen() ->
-    cecho:erase(),
-    cecho:curs_set(?ceCURS_INVISIBLE),
+    encurses:erase(),
+    encurses:curs_set(?ceCURS_INVISIBLE),
     {MX,MY} = ru_util:get_window_dimensions(),
     spiral(0, 0, 1, 0, 0, 0, MX-1, MY-1, 0),
-    cecho:refresh(),
-    fade_in_title(" R O G U E U N L I K E ", MX, MY),
-    cecho:getch(),
+    encurses:refresh(),
+    fade_in_title(" R O G U E U N L I K E "),
+    encurses:getch(),
+    encurses:erase(),
+    encurses:refresh(),
     ok.
 

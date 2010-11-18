@@ -50,7 +50,7 @@ console_loop(Cons) ->
     receive
         {create, Height} ->
             Win = create_console(Height),
-            {_, MaxX} = cecho:getmaxyx(),
+            {MaxX, _} = encurses:getmaxxy(),
             console_loop(Cons#console_state{
                     win = Win, height = Height, width = MaxX});
 
@@ -60,15 +60,18 @@ console_loop(Cons) ->
             console_loop(Cons);
 
         {redraw, _Reason} ->
-            cecho:delwin(Cons#console_state.win),
-            cecho:erase(),
-            cecho:refresh(),
+            %encurses:delwin(Cons#console_state.win),
+            %encurses:erase(Cons#console_state.win),
+            encurses:refresh(),
             Win = create_console(Cons#console_state.height),
-            {_, MaxX} = cecho:getmaxyx(),
-            NewCons = Cons#console_state{width=MaxX, win=Win},
-            draw_console(NewCons),
-            ru_char:draw_stats(),
-            console_loop(NewCons);
+            %{MaxX, _} = encurses:getmaxxy(),
+            %NewCons = Cons#console_state{width=MaxX, win=Win},
+            %draw_console(NewCons),
+            %ru_char:draw_stats(),            
+            %console_loop(NewCons);
+            draw_console(Cons),
+            encurses:refresh(Win),
+            console_loop(Cons);
 
         {msg, Text} ->
             NextCons = Cons#console_state{
@@ -88,34 +91,36 @@ console_loop(Cons) ->
 %% ============================================================================
 
 create_console(Height) ->
-    cecho:curs_set(?ceCURS_INVISIBLE),
-    {MaxY, MaxX} = cecho:getmaxyx(),
-    Win = cecho:newwin(Height+1, MaxX, MaxY-(Height+1), 0),
-    cecho:wborder(Win, ?CONSOLE_BORDERS),
-    cecho:wmove(Win, 0, 3),
-    cecho:waddstr(Win, " Messages "),
-    cecho:wrefresh(Win),
+    encurses:curs_set(?ceCURS_INVISIBLE),
+    {MaxX, MaxY} = encurses:getmaxxy(),
+    Win = encurses:newwin(0, MaxY-(Height+1), MaxX, Height+1),
+    encurses:mvaddstr(5,5,?PP(Win)),
+    encurses:refresh(),
+    encurses:border(Win, ?CONSOLE_BORDERS),
+    encurses:move(Win, 3, 0),
+    encurses:waddstr(Win, " Messages "),
+    encurses:refresh(Win),
     Win.
 
 draw_console(#console_state{lines = Lines,
         win = Win, height = Height, width = Width} = Cons) ->
     clear_lines(Win, Height, Width),
     draw_lines(Win, Lines, Height),
-    cecho:wrefresh(Win),
+    encurses:refresh(Win),
     Cons.
 
 draw_lines(_, [], _) -> ok;
 draw_lines(_, _, 0) -> ok;
 draw_lines(Win, Lines, Height) ->
     [Last | Rest] = Lines,
-    cecho:wmove(Win, Height, 0),
-    cecho:waddstr(Win, Last),
+    encurses:move(Win, 0, Height),
+    encurses:waddstr(Win, Last),
     draw_lines(Win, Rest, Height - 1).
 
 clear_lines(_, 0, _) -> ok;
 clear_lines(Win, Height, Width) ->
-    cecho:wmove(Win, Height, 0),
-    cecho:whline(Win, $\s, Width),
+    encurses:move(Win, 0, Height),
+    encurses:hline(Win, $\s, Width),
     clear_lines(Win, Height-1, Width).
     
 %% draw the stat line after clearing it with a baseline hline
@@ -126,12 +131,12 @@ draw_stats(Char, #console_state{
         nil -> 
             ok;
         _ ->
-            cecho:wmove(Win, 0, 0),
-            cecho:whline(Win, $=, Width),
+            encurses:move(Win, 0, 0),
+            encurses:hline(Win, $=, Width),
             Line = io_lib:format("  ~s  ", [ru_char:stat_line(Char)]),
-            cecho:wmove(Win, 0, 2),
-            cecho:waddstr(Win, Line),
-            cecho:wrefresh(Win),
+            encurses:move(Win, 2, 0),
+            encurses:waddstr(Win, Line),
+            encurses:refresh(Win),
             ok
     end.
 

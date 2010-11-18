@@ -13,7 +13,6 @@
 
 -author("Jeff Zellner <jeff.zellner@gmail.com>").
 
--include("cecho.hrl").
 -include("ru.hrl").
 
 -export([dog_brain/2, zombie_brain/2]).
