@@ -18,6 +18,7 @@
 
 -export([start/0]).
 -export([tick/0, add/1]).
+-export([state_loop/1]).
 
 %% ============================================================================
 %% Module API
@@ -37,7 +38,7 @@ add(#mob{} = Mob) ->
 
 start() ->
     true = register(?MODULE,
-        spawn(fun() -> state_loop([]) end)).
+        spawn(?MODULE, state_loop, [[]])).
 
 state_loop(State) ->
     receive

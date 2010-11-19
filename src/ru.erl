@@ -16,7 +16,6 @@
 -include("cecho.hrl").
 -include("ru.hrl").
 
-%-export([start/2, stop/1]).
 -export([go/0, die/0]).
 -export([resize_loop/0, exit/1, redraw/1, tick/0]).
 
@@ -35,12 +34,12 @@ go() ->
     ru_console:create(ConsoleHeight),
     ?MSG("Press q to quit!"),
     ru_input:set_mode({ru_input, game_mode}),
-    %ru_world:init(ConsoleHeight),
-    %ru_world:database_test(),
-    %ru_state:add_hero({1,1}),
-    %make_dog(),
-    %make_zombie(),
-    %ru_world:redraw(init),
+    ru_world:init(ConsoleHeight),
+    ru_world:database_test(),
+    ru_state:add_hero({1,1}),
+    make_dog(),
+    make_zombie(),
+    ru_world:redraw(init),
     main_loop(#state{}).
 
 die() ->
@@ -73,22 +72,21 @@ main_loop(State) ->
             main_loop(State#state{ turn=State#state.turn + 1});
 
         {redraw, Reason} ->
-            encurses:mvaddch(5,5,$A),
-            encurses:refresh(),
             % only do the whole reinit curses thing on screen resize
-            case Reason of 
-                sigwinch ->
-                    encurses:endwin(),
-                    encurses:initscr(),
-                    encurses:erase(),
-                    encurses:refresh(),
-                    %% this is wonky, but looks much, much nicer
-                    ?MODULE ! {redraw, post_sigwinch}; 
-                _ -> ok
-            end,
+            %case Reason of 
+            %    sigwinch ->
+            %        encurses:endwin(),
+            %        encurses:initscr(),
+            %        encurses:erase(),
+            %        encurses:refresh(),
+            %        %% this is wonky, but looks much, much nicer
+            %        ?MODULE ! {redraw, post_sigwinch}; 
+            %    _ -> ok
+            %end,
             ru_input:redraw(Reason),
-            %ru_world:redraw(Reason),
+            ru_world:redraw(Reason),
             ru_console:redraw(Reason),
+            encurses:refresh(),
             main_loop(State);
 
         {exit, _} ->
@@ -123,13 +121,13 @@ start_systems() ->
     ru_console:start(),
     ru_char:start(),
     ru_input:start(),
-    %ru_world:start(),
-    %ru_state:start(),
-    %ru_mobs:start(),
+    ru_world:start(),
+    ru_state:start(),
+    ru_mobs:start(),
     start_self().
 
 start_self() ->
-    spawn(?MODULE, resize_loop, []),
+    %spawn(?MODULE, resize_loop, []),
     true = register(?MODULE, self()),
     ok.
 

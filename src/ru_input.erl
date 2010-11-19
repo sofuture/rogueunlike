@@ -46,8 +46,8 @@ exit(Reason) ->
 %% ============================================================================
 
 start() ->
-    %_KeyReader = spawn(?MODULE, key_loop, []),
-    %true = register(keyreader, _KeyReader),
+    true = register(keyreader,
+        spawn(?MODULE, key_loop, [])),
     true = register(?MODULE,
         spawn(?MODULE, recv_loop, [fun(_,_) -> ok end, #input{}])).
 
@@ -72,10 +72,11 @@ recv_loop(Mode, State) ->
     end.
 
 key_loop() ->
-    %encurses:noecho(),
-    %Ch = encurses:getch(),
-    timer:sleep(1000),
-    Ch = $a,
+    Ch = io:get_chars("", 1),
+%    erlang:yield(),
+%    encurses:echo(),
+%    Ch = encurses:getch(),
+%    erlang:yield(),
     input(Ch),
     key_loop().
 

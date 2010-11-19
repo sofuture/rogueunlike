@@ -5,6 +5,8 @@
 #include "erl_nif.h"
 #include "encurses.h"
 
+static WINDOW *slots[_MAXWINDOWS+1];
+
 /** implementations **/
 
 /* NIF management */
@@ -82,13 +84,17 @@ static ERL_NIF_TERM
 e_newwin(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     int slot = find_free_window_slot();
-    long width, height, startx, starty;
-    enif_get_long(env, argv[0], &width);
-    enif_get_long(env, argv[1], &height);
-    enif_get_long(env, argv[2], &startx);
-    enif_get_long(env, argv[3], &starty);
-    slots[slot] = newwin(height, width, starty, startx);
-    return enif_make_long(env, slot);
+    if(slot >= 1) {
+        int width, height, startx, starty;
+        enif_get_int(env, argv[0], &width);
+        enif_get_int(env, argv[1], &height);
+        enif_get_int(env, argv[2], &startx);
+        enif_get_int(env, argv[3], &starty);
+        slots[slot] = newwin(height, width, starty, startx);
+        return enif_make_long(env, slot);
+    } else {
+        return done(env, FALSE);
+    }
 }
 
 // delwin
@@ -109,6 +115,7 @@ e_delwin(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     else 
     {
         delwin(slots[slot]);
+        slots[slot] = NULL;
         return done(env, OK);
     }
 }
@@ -126,8 +133,14 @@ e_endwin(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM 
 e_initscr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    slots[0] = (WINDOW *)initscr();
-    return enif_make_long(env, 0);
+    int flag;
+    enif_get_int(env, argv[0], &flag);
+    if(flag >= 1) {
+        slots[0] = (WINDOW *)initscr();
+        return enif_make_long(env, 0);
+    } else {
+        return done(env, FALSE);
+    }
 }
 
 // cbreak
@@ -240,13 +253,14 @@ e_addstr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM 
 e_waddstr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    long length;
-    enif_get_long(env, argv[1], &length);
+    int length;
+    enif_get_int(env, argv[1], &length);
+
     char buff[length];
     enif_get_string(env, argv[2], buff, length+1, ERL_NIF_LATIN1);
 
-    long win;
-    enif_get_long(env, argv[0], &win);
+    int win;
+    enif_get_int(env, argv[0], &win);
 
     return done(env, waddnstr(slots[win], buff, length));
 }
@@ -254,30 +268,33 @@ e_waddstr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM 
 e_mvaddstr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    long length;
-    enif_get_long(env, argv[2], &length);
+    int length;
+    enif_get_int(env, argv[2], &length);
+
     char buff[length];
     enif_get_string(env, argv[3], buff, length+1, ERL_NIF_LATIN1);
 
-    long x, y;
-    enif_get_long(env, argv[0], &x);
-    enif_get_long(env, argv[1], &y);
-    return done(env, mvaddnstr((int)y, (int)x, buff, length));
+    int x, y;
+    enif_get_int(env, argv[0], &x);
+    enif_get_int(env, argv[1], &y);
+
+    return done(env, mvaddnstr(y, x, buff, length));
 }
 
 static ERL_NIF_TERM 
 e_mvwaddstr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    long length;
-    enif_get_long(env, argv[0], &length);
-    char buff[length];
-    enif_get_string(env, argv[1], buff, length+1, ERL_NIF_LATIN1);
+    int length;
+    enif_get_int(env, argv[3], &length);
 
-    long win, x, y;
-    enif_get_long(env, argv[0], &win);
-    enif_get_long(env, argv[1], &x);
-    enif_get_long(env, argv[2], &y);
-    return done(env, mvwaddnstr(slots[win], (int)y, (int)x, buff, length));
+    char buff[length];
+    enif_get_string(env, argv[4], buff, length+1, ERL_NIF_LATIN1);
+
+    int win, x, y;
+    enif_get_int(env, argv[0], &win);
+    enif_get_int(env, argv[1], &x);
+    enif_get_int(env, argv[2], &y);
+    return done(env, mvwaddnstr(slots[win], y, x, buff, length));
 }
 
 // move
@@ -285,20 +302,20 @@ e_mvwaddstr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM
 e_move(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    long x, y;
-    enif_get_long(env, argv[0], &x);
-    enif_get_long(env, argv[1], &y);
-    return done(env, move((int)y, (int)x));
+    int x, y;
+    enif_get_int(env, argv[0], &x);
+    enif_get_int(env, argv[1], &y);
+    return done(env, move(y, x));
 }
 
 static ERL_NIF_TERM
 e_wmove(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    long win, x, y;
-    enif_get_long(env, argv[0], &win);
-    enif_get_long(env, argv[1], &x);
-    enif_get_long(env, argv[2], &y);
-    return done(env, wmove(slots[win], (int)y, (int)x));
+    int win, x, y;
+    enif_get_int(env, argv[0], &win);
+    enif_get_int(env, argv[1], &x);
+    enif_get_int(env, argv[2], &y);
+    return done(env, wmove(slots[win], y, x));
 }
 
 // getxy
@@ -555,9 +572,16 @@ e_keypad(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM 
 e_getch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    int keycode;
-    keycode = getch();
-    return enif_make_int(env, keycode);
+    int flag;
+    enif_get_int(env, argv[0], &flag);
+
+    if(flag >= 1) {
+        int keycode;
+        keycode = getch();
+        return enif_make_int(env, keycode);
+    } else {
+        return done(env, FALSE);
+    }
 }
 
 // sigwinch
@@ -567,7 +591,6 @@ e_sigwinch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     return done(env, OK);
 }
-
 
 /* NIF map */
 
@@ -580,7 +603,7 @@ static ErlNifFunc nif_funcs[] =
     {"e_delwin", 1, e_delwin},
     {"e_endwin", 0, e_endwin},
 
-    {"e_initscr", 0, e_initscr},
+    {"e_initscr", 1, e_initscr},
 
     {"e_cbreak", 0, e_cbreak},
     {"e_nocbreak", 0, e_nocbreak},
@@ -637,8 +660,7 @@ static ErlNifFunc nif_funcs[] =
     {"e_box", 3, e_box},
 
     {"e_keypad", 2, e_keypad},
-    {"e_getch", 0, e_getch},
-
+    {"e_getch", 1, e_getch},
     {"e_sigwinch", 0, e_sigwinch},
 };
 

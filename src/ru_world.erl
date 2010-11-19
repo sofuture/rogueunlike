@@ -103,8 +103,8 @@ world_loop(State) ->
 
 create_window(Height, Width) ->
     encurses:curs_set(?ceCURS_INVISIBLE),
-    Win = encurses:newwin(Height, Width, 0, 0),
-    encurses:refresh(Win),
+    Win = encurses:newwin(Width, Height, 0, 0),
+    %encurses:refresh(Win),
     Win.
 
 draw_world(Win) ->
@@ -116,10 +116,10 @@ draw_world(Win) ->
     DrawF = fun(Spot) ->
         Char = square_char(Spot#world.stuff),
         {LocX, LocY} = Spot#world.loc,
-        encurses:mvwaddch(Win, DrawY+LocY, DrawX+LocX, Char)
+        encurses:mvwaddch(Win, DrawX+LocX, DrawY+LocY, Char)
     end,
     lists:foreach(DrawF, World),
-    encurses:refresh(Win),
+    %encurses:refresh(),
     ok.
 
 get_world_square(Location) ->

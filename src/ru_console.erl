@@ -60,18 +60,15 @@ console_loop(Cons) ->
             console_loop(Cons);
 
         {redraw, _Reason} ->
-            %encurses:delwin(Cons#console_state.win),
-            %encurses:erase(Cons#console_state.win),
-            encurses:refresh(),
+            encurses:delwin(Cons#console_state.win),
+            encurses:erase(Cons#console_state.win),
+            %encurses:refresh(),
             Win = create_console(Cons#console_state.height),
-            %{MaxX, _} = encurses:getmaxxy(),
-            %NewCons = Cons#console_state{width=MaxX, win=Win},
-            %draw_console(NewCons),
-            %ru_char:draw_stats(),            
-            %console_loop(NewCons);
-            draw_console(Cons),
-            encurses:refresh(Win),
-            console_loop(Cons);
+            {MaxX, _} = encurses:getmaxxy(),
+            NewCons = Cons#console_state{width=MaxX, win=Win},
+            draw_console(NewCons),
+            ru_char:draw_stats(),            
+            console_loop(NewCons);
 
         {msg, Text} ->
             NextCons = Cons#console_state{
@@ -93,28 +90,25 @@ console_loop(Cons) ->
 create_console(Height) ->
     encurses:curs_set(?ceCURS_INVISIBLE),
     {MaxX, MaxY} = encurses:getmaxxy(),
-    Win = encurses:newwin(0, MaxY-(Height+1), MaxX, Height+1),
+    Win = encurses:newwin(MaxX, Height+1, 0, MaxY-(Height+1)),
     encurses:mvaddstr(5,5,?PP(Win)),
-    encurses:refresh(),
+    %encurses:refresh(),
     encurses:border(Win, ?CONSOLE_BORDERS),
-    encurses:move(Win, 3, 0),
-    encurses:waddstr(Win, " Messages "),
-    encurses:refresh(Win),
+    encurses:mvwaddstr(Win, 3, 0, " Messages "),
     Win.
 
 draw_console(#console_state{lines = Lines,
         win = Win, height = Height, width = Width} = Cons) ->
     clear_lines(Win, Height, Width),
     draw_lines(Win, Lines, Height),
-    encurses:refresh(Win),
+    %encurses:refresh(Win),
     Cons.
 
 draw_lines(_, [], _) -> ok;
 draw_lines(_, _, 0) -> ok;
 draw_lines(Win, Lines, Height) ->
     [Last | Rest] = Lines,
-    encurses:move(Win, 0, Height),
-    encurses:waddstr(Win, Last),
+    encurses:mvwaddstr(Win, 0, Height, Last),
     draw_lines(Win, Rest, Height - 1).
 
 clear_lines(_, 0, _) -> ok;
@@ -134,9 +128,8 @@ draw_stats(Char, #console_state{
             encurses:move(Win, 0, 0),
             encurses:hline(Win, $=, Width),
             Line = io_lib:format("  ~s  ", [ru_char:stat_line(Char)]),
-            encurses:move(Win, 2, 0),
-            encurses:waddstr(Win, Line),
-            encurses:refresh(Win),
+            encurses:mvwaddstr(Win, 2, 0, Line),
+            %encurses:refresh(Win),
             ok
     end.
 
