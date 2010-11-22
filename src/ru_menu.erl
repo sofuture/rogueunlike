@@ -33,10 +33,11 @@ draw(Text) ->
         Acc + 1
     end,
     lists:foldl(Print, 1, Text),
-    %encurses:refresh(Win),
+    encurses:refresh(Win),
     Win.
 
 undraw(_Win) ->
+    ru:redraw(menu_close),
     ok.
 
 %% ============================================================================

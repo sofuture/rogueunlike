@@ -27,7 +27,7 @@
 
 go() ->
     init(),
-    splash_screen(),
+    %splash_screen(),
     start_systems(),
     make_hero(),
     ConsoleHeight = 6,
@@ -46,6 +46,9 @@ die() ->
     ru_console:exit(die),
     ru_char:exit(die),
     ru_input:exit(die),
+    encurses:erase(),
+    encurses:refresh(),
+    encurses:endwin(),
     halt().
 
 %% ============================================================================
@@ -72,17 +75,6 @@ main_loop(State) ->
             main_loop(State#state{ turn=State#state.turn + 1});
 
         {redraw, Reason} ->
-            % only do the whole reinit curses thing on screen resize
-            %case Reason of 
-            %    sigwinch ->
-            %        encurses:endwin(),
-            %        encurses:initscr(),
-            %        encurses:erase(),
-            %        encurses:refresh(),
-            %        %% this is wonky, but looks much, much nicer
-            %        ?MODULE ! {redraw, post_sigwinch}; 
-            %    _ -> ok
-            %end,
             ru_input:redraw(Reason),
             ru_world:redraw(Reason),
             ru_console:redraw(Reason),

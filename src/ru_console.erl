@@ -51,29 +51,32 @@ console_loop(Cons) ->
         {create, Height} ->
             Win = create_console(Height),
             {MaxX, _} = encurses:getmaxxy(),
+            encurses:refresh(Win),
             console_loop(Cons#console_state{
                     win = Win, height = Height, width = MaxX});
 
         {stats, Char} ->
             draw_console(Cons),
             draw_stats(Char, Cons),
+            encurses:refresh(Cons#console_state.win),
             console_loop(Cons);
 
         {redraw, _Reason} ->
             encurses:delwin(Cons#console_state.win),
             encurses:erase(Cons#console_state.win),
-            %encurses:refresh(),
             Win = create_console(Cons#console_state.height),
             {MaxX, _} = encurses:getmaxxy(),
             NewCons = Cons#console_state{width=MaxX, win=Win},
             draw_console(NewCons),
             ru_char:draw_stats(),            
+            encurses:refresh(NewCons#console_state.win),
             console_loop(NewCons);
 
         {msg, Text} ->
             NextCons = Cons#console_state{
                     lines = [Text | Cons#console_state.lines]},
             draw_console(NextCons),
+            encurses:refresh(NextCons#console_state.win),
             console_loop(NextCons);
 
         {exit, _} -> 
@@ -92,9 +95,9 @@ create_console(Height) ->
     {MaxX, MaxY} = encurses:getmaxxy(),
     Win = encurses:newwin(MaxX, Height+1, 0, MaxY-(Height+1)),
     encurses:mvaddstr(5,5,?PP(Win)),
-    %encurses:refresh(),
     encurses:border(Win, ?CONSOLE_BORDERS),
     encurses:mvwaddstr(Win, 3, 0, " Messages "),
+    %encurses:refresh(),
     Win.
 
 draw_console(#console_state{lines = Lines,

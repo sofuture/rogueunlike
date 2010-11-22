@@ -72,11 +72,8 @@ recv_loop(Mode, State) ->
     end.
 
 key_loop() ->
-    Ch = io:get_chars("", 1),
-%    erlang:yield(),
-%    encurses:echo(),
-%    Ch = encurses:getch(),
-%    erlang:yield(),
+    encurses:noecho(),
+    Ch = encurses:getch(),
     input(Ch),
     key_loop().
 

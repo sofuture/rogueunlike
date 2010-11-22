@@ -83,6 +83,7 @@ world_loop(State) ->
 
         {redraw, _Reason} ->
             Win = State#world_state.win,
+            encurses:erase(Win),
             draw_world(Win),
             world_loop(State);
 
@@ -104,7 +105,7 @@ world_loop(State) ->
 create_window(Height, Width) ->
     encurses:curs_set(?ceCURS_INVISIBLE),
     Win = encurses:newwin(Width, Height, 0, 0),
-    %encurses:refresh(Win),
+    encurses:refresh(Win),
     Win.
 
 draw_world(Win) ->
@@ -119,7 +120,7 @@ draw_world(Win) ->
         encurses:mvwaddch(Win, DrawX+LocX, DrawY+LocY, Char)
     end,
     lists:foreach(DrawF, World),
-    %encurses:refresh(),
+    encurses:refresh(Win),
     ok.
 
 get_world_square(Location) ->

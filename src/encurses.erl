@@ -89,11 +89,7 @@ endwin() ->
 %% initscr
 
 initscr() ->
-    %% we need to call this function with some sort
-    %% of guard, so we can determine 'real' calls
-    %% from some sort of initialization call that 
-    %% shouldnt be happening
-    e_initscr(1).
+    e_initscr().
 
 %% cbreak
 
@@ -277,7 +273,10 @@ keypad(Win, Flag) when is_integer(Win) and is_boolean(Flag) ->
 %% getch
 
 getch() ->
-    e_getch(1).
+    e_getch(self()),
+    receive
+        Char -> Char
+    end.
 
 %% sigwinch
 
@@ -303,7 +302,7 @@ e_delwin(_Win) ->
 e_endwin() ->
     not_initialized.
 
-e_initscr(_Int) ->
+e_initscr() ->
     not_initialized.
 
 e_cbreak() -> 
@@ -423,10 +422,8 @@ e_box(_Win, _Horz, _Vert) ->
 e_keypad(_Win, _Flag) ->
     not_initialized.
 
-e_getch(_Int) ->
+e_getch(_Pid) ->
     not_initialized.
 
 e_sigwinch() ->
     not_initialized.
-
-

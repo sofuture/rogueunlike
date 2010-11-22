@@ -133,14 +133,8 @@ e_endwin(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM 
 e_initscr(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    int flag;
-    enif_get_int(env, argv[0], &flag);
-    if(flag >= 1) {
-        slots[0] = (WINDOW *)initscr();
-        return enif_make_long(env, 0);
-    } else {
-        return done(env, FALSE);
-    }
+    slots[0] = (WINDOW *)initscr();
+    return enif_make_long(env, 0);
 }
 
 // cbreak
@@ -572,16 +566,27 @@ e_keypad(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM 
 e_getch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-    int flag;
-    enif_get_int(env, argv[0], &flag);
+    TEnv *tenv = (TEnv *) enif_alloc(sizeof(TEnv));
+    tenv->env = enif_alloc_env();
+    tenv->pid = enif_make_copy(tenv->env, argv[0]);
 
-    if(flag >= 1) {
-        int keycode;
-        keycode = getch();
-        return enif_make_int(env, keycode);
-    } else {
-        return done(env, FALSE);
-    }
+    ErlNifTid tid;
+    enif_thread_create("getch", &tid, do_getch, tenv, NULL);
+    return done(env, OK);
+}
+
+static void *
+do_getch(void *arg)
+{
+    TEnv *env = (TEnv *)arg;
+    ErlNifPid pid;
+    enif_get_local_pid(env->env, env->pid, &pid);
+
+    int keycode;
+    keycode = getch();
+    enif_send(NULL, &pid, env->env, enif_make_int(env->env, keycode));
+    enif_clear_env(env->env);
+    return 0;
 }
 
 // sigwinch
@@ -603,7 +608,7 @@ static ErlNifFunc nif_funcs[] =
     {"e_delwin", 1, e_delwin},
     {"e_endwin", 0, e_endwin},
 
-    {"e_initscr", 1, e_initscr},
+    {"e_initscr", 0, e_initscr},
 
     {"e_cbreak", 0, e_cbreak},
     {"e_nocbreak", 0, e_nocbreak},
