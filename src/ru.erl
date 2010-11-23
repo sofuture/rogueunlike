@@ -75,10 +75,10 @@ main_loop(State) ->
             main_loop(State#state{ turn=State#state.turn + 1});
 
         {redraw, Reason} ->
-            ru_input:redraw(Reason),
+            %ru_input:redraw(Reason),
             ru_world:redraw(Reason),
             ru_console:redraw(Reason),
-            encurses:refresh(),
+            %encurses:refresh(),
             main_loop(State);
 
         {exit, _} ->
