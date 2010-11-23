@@ -27,7 +27,7 @@
 
 go() ->
     init(),
-    %splash_screen(),
+    splash_screen(),
     start_systems(),
     make_hero(),
     ConsoleHeight = 6,
@@ -106,6 +106,7 @@ resize_loop() ->
 
 init() ->
     encurses:initscr(),
+    encurses:keypad(0, true),
     encurses:noecho(),
     ok.
 

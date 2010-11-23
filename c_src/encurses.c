@@ -5,7 +5,7 @@
 #include "erl_nif.h"
 #include "encurses.h"
 
-static WINDOW *slots[_MAXWINDOWS+1];
+static WINDOW *slots[_MAXWINDOWS + 1];
 
 /** implementations **/
 
@@ -15,7 +15,7 @@ static int
 load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info)
 {
     int i;
-    for(i=0;i<_MAXWINDOWS;i++){
+    for(i = 0; i < _MAXWINDOWS; i++){
         slots[i] = NULL;
     }
     return 0;

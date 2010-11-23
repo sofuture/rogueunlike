@@ -94,7 +94,6 @@ create_console(Height) ->
     encurses:curs_set(?ceCURS_INVISIBLE),
     {MaxX, MaxY} = encurses:getmaxxy(),
     Win = encurses:newwin(MaxX, Height+1, 0, MaxY-(Height+1)),
-    encurses:mvaddstr(5,5,?PP(Win)),
     encurses:border(Win, ?CONSOLE_BORDERS),
     encurses:mvwaddstr(Win, 3, 0, " Messages "),
     %encurses:refresh(),
