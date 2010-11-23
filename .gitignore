@@ -17,4 +17,6 @@ configure
 autom4te.cache
 build-aux
 *.diff
+*.c.swp
+*.h.swp
 

@@ -6,23 +6,41 @@
 
 #define _MAXWINDOWS 64
 
+static WINDOW *slots[_MAXWINDOWS+1];
+
+typedef struct _qitem_t
+{
+    struct _qitem_t* next;
+    ErlNifPid* pid;
+} qitem_t;
+
 typedef struct
 {
-    ErlNifEnv *env;
-    ERL_NIF_TERM pid;
-} TEnv;
+    ErlNifMutex* lock;
+    ErlNifCond* cond;
+    qitem_t* head;
+    qitem_t* tail;
+} queue_t;
 
-static WINDOW *slots[_MAXWINDOWS+1];
+typedef struct
+{
+    ErlNifThreadOpts* opts;
+    ErlNifTid qthread;
+    queue_t* queue;
+    ERL_NIF_TERM atom_ok;
+} state_t;
+
 
 /** function prototypes **/
 
 /* NIF management */
 
-static int load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_data);
+static int load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_data);
+static void unload(ErlNifEnv* env, void* priv);
 
 /* internal helpers */
 
-static void *do_getch(void *arg);
+static void *thr_main(void *arg);
 static int find_free_window_slot();
 static ERL_NIF_TERM done(ErlNifEnv* env, int code);
 static ERL_NIF_TERM boolean(ErlNifEnv* env, int value);
