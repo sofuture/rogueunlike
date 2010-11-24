@@ -146,17 +146,22 @@ do_move(hero, Direction) ->
             Square = ?GET({DX,DY}),
             case Square of
                 nil -> error;
-                _ -> 
-                    Res = case ?HAS(Square, walkable) of
-                        true -> 
-                            ?SAVE(?ADD(Square, hero)),
-                            ?SAVE(?SUB(Current, hero)),
-                            ok;
+                _ ->
+                    case ?HAS(Square, mob) of
+                        true ->
+                            do_attack(hero, Direction);
                         false ->
-                            error
-                    end,
-                    ru:redraw(move),
-                    Res
+                            Res = case ?HAS(Square, walkable) of
+                                true -> 
+                                    ?SAVE(?ADD(Square, hero)),
+                                    ?SAVE(?SUB(Current, hero)),
+                                    ok;
+                                false ->
+                                    error
+                            end,
+                            ru:redraw(move),
+                            Res
+                    end
             end
     end.
 

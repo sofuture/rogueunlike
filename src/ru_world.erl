@@ -183,6 +183,9 @@ bounding_dimensions(World) ->
     MaxY = lists:max(lists:map(FYs, World)),
     {MaxX + 1, MaxY + 1}.
 
+square_has(Square, mob) ->
+    FindMob = fun(Elem) -> is_record(Elem, mob) end,
+    lists:any(FindMob, Square#world.stuff);
 square_has(Square, Thing) when is_record(Thing, mob) 
         andalso is_record(Square, world) ->
     FindMe = fun(Elem) -> Thing#mob.ref =:= Elem#mob.ref end,
