@@ -8,29 +8,6 @@
 
 static WINDOW *slots[_MAXWINDOWS+1];
 
-typedef struct _qitem_t
-{
-    struct _qitem_t* next;
-    ErlNifPid* pid;
-} qitem_t;
-
-typedef struct
-{
-    ErlNifMutex* lock;
-    ErlNifCond* cond;
-    qitem_t* head;
-    qitem_t* tail;
-} queue_t;
-
-typedef struct
-{
-    ErlNifThreadOpts* opts;
-    ErlNifTid qthread;
-    queue_t* queue;
-    ERL_NIF_TERM atom_ok;
-} state_t;
-
-
 /** function prototypes **/
 
 /* NIF management */
@@ -119,6 +96,4 @@ static ERL_NIF_TERM e_box(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
 static ERL_NIF_TERM e_keypad(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
 
 static ERL_NIF_TERM e_getch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
-
-static ERL_NIF_TERM e_sigwinch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[]);
 

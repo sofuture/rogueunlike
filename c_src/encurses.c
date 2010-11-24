@@ -6,7 +6,7 @@
 #include "erl_nif.h"
 #include "encurses.h"
 
-/*typedef struct _qitem_t
+typedef struct _qitem_t
 {
     struct _qitem_t* next;
     ErlNifPid* pid;
@@ -26,7 +26,7 @@ typedef struct
     ErlNifTid qthread;
     queue_t* queue;
     ERL_NIF_TERM atom_ok;
-} state_t;*/
+} state_t;
 
 queue_t*
 queue_create()
@@ -764,14 +764,6 @@ thr_main(void* obj)
     return NULL;
 }
 
-// sigwinch
-
-static ERL_NIF_TERM 
-e_sigwinch(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
-{
-    return done(env, OK);
-}
-
 /* NIF map */
 
 static ErlNifFunc nif_funcs[] =
@@ -841,7 +833,6 @@ static ErlNifFunc nif_funcs[] =
 
     {"e_keypad", 2, e_keypad},
     {"e_getch", 1, e_getch},
-    {"e_sigwinch", 0, e_sigwinch},
 };
 
 ERL_NIF_INIT(encurses, nif_funcs, load, NULL, NULL, unload)
