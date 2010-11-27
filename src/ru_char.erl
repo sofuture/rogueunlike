@@ -16,8 +16,9 @@
 -include("cecho.hrl").
 -include("ru.hrl").
 
--export([exit/1, draw_stats/0, set_char/1, start/0, char_loop/1, stat_line/1]).
+-export([exit/1, draw_stats/0, set_char/1, start/0, char_loop/1]).
 -export([add_item/1, remove_item/1]).
+-export([stat_line/1, attr_line/1]).
 
 %% ============================================================================
 %% Module API
@@ -78,6 +79,18 @@ char_loop(Char) ->
 %% ============================================================================
 %% Internal Functions
 %% ============================================================================
+
+attr_line(Char) ->
+    Att = Char#cstats.attributes,
+    Str = Att#cattributes.strength,
+    Dex = Att#cattributes.dexterity,
+    Con = Att#cattributes.constitution,
+    Int = Att#cattributes.intelligence,
+    Wis = Att#cattributes.wisdom,
+    Cha = Att#cattributes.charisma,
+    Format = "Str: ~p Dex: ~p Con: ~p Int: ~p Wis: ~p Cha: ~p",
+    io_lib:format(Format, [Str, Dex, Con, Int, Wis, Cha]).
+
 
 stat_line(Char) ->
     Name = Char#cstats.name,

@@ -129,9 +129,11 @@ draw_stats(Char, #console_state{
         _ ->
             encurses:move(Win, 0, 0),
             encurses:hline(Win, $=, Width),
-            Line = io_lib:format("  ~s  ", [ru_char:stat_line(Char)]),
-            encurses:mvwaddstr(Win, 2, 0, Line),
-            %encurses:refresh(Win),
+            StatLine = io_lib:format(" ~s ", [ru_char:stat_line(Char)]),
+            encurses:mvwaddstr(Win, 2, 0, StatLine),
+            AttrLine = io_lib:format(" ~s ", [ru_char:attr_line(Char)]),
+            AttrLineLen = length(lists:flatten(AttrLine)),
+            encurses:mvwaddstr(Win, (Width-(AttrLineLen+2)), 0, AttrLine),
             ok
     end.
 

@@ -56,8 +56,21 @@ die() ->
 %% ============================================================================
 
 make_hero() ->
-    Char = #cstats{ name="Gravlax", gender=male, race="Troll",
-        level=1, gold=100, hp=20, hpmax=20},
+    Char = #cstats{ 
+        name = "Gravlax", 
+        gender = male, 
+        race = "Troll",
+        level = 1, 
+        gold = 100, 
+        hp = 20, 
+        hpmax = 20,
+        attributes = #cattributes { 
+            strength = 10,
+            dexterity = 7,
+            constitution = 5,
+            intelligence = 4,
+            wisdom = 2,
+            charisma = 2 }},
     ru_char:set_char(Char).
 
 make_dog() ->
