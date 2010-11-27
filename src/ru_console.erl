@@ -96,14 +96,12 @@ create_console(Height) ->
     Win = encurses:newwin(MaxX, Height+1, 0, MaxY-(Height+1)),
     encurses:border(Win, ?CONSOLE_BORDERS),
     encurses:mvwaddstr(Win, 3, 0, " Messages "),
-    %encurses:refresh(),
     Win.
 
 draw_console(#console_state{lines = Lines,
         win = Win, height = Height, width = Width} = Cons) ->
     clear_lines(Win, Height, Width),
     draw_lines(Win, Lines, Height),
-    %encurses:refresh(Win),
     Cons.
 
 draw_lines(_, [], _) -> ok;
