@@ -6,7 +6,8 @@
 -record(mob, {
         type = nil,
         ref = nil,
-        func = nil}).
+        func = nil,
+        attackedby = nil}).
 
 -record(world_state, {
         win = nil, 

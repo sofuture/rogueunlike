@@ -17,7 +17,7 @@
 -include("ru.hrl").
 
 -export([start/0]).
--export([tick/0, add/1]).
+-export([tick/0, add/1, update/1]).
 -export([state_loop/1]).
 
 %% ============================================================================
@@ -30,6 +30,10 @@ tick() ->
 
 add(#mob{} = Mob) ->
     ?MODULE ! {add, self(), Mob},
+    ?WAITFOROK.
+
+update(#mob{} = Mob) ->
+    ?MODULE ! {update, self(), Mob},
     ?WAITFOROK.
 
 %% ============================================================================
@@ -50,6 +54,10 @@ state_loop(State) ->
         {add, Caller, Mob} ->
             Caller ! ok,
             state_loop([Mob | State]);
+
+        {update, Caller, Mob} ->
+            Caller ! ok,
+            state_loop(update_mob(Mob, State));
         
         {exit, _} -> 
             ok;
@@ -68,7 +76,12 @@ tick([Head | Tail] = _MobList) ->
     F = Head#mob.func,
     case F of
         nil -> ok;
-        _ -> F(tick, Head#mob.ref)
+        _ -> F(tick, Head)
     end,
     tick(Tail).
 
+update_mob(Mob, State) ->
+    MobRef = Mob#mob.ref,
+    OtherFilter = fun(Elem) -> Elem#mob.ref =/= MobRef end,
+    Others = lists:filter(OtherFilter, State),
+    [Mob | Others].
