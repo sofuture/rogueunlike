@@ -24,7 +24,7 @@
 dog_brain(Event, Me) ->
     case Event of 
         tick ->
-            {MyLoc, _} = ru_world:mob_location(Me),
+            {MyLoc, _} = ru_world:mob_location(Me#mob.ref),
             HeroLoc = ru_world:hero_location(),
             {CX,CY} = MyLoc#world.loc,
             {HX,HY} = HeroLoc#world.loc,
@@ -46,11 +46,11 @@ dog_brain(Event, Me) ->
             end,
             %% dont move on top of hero's square
             case ru_util:direction_coords({CX,CY}, Dir) of
-                {HX, HY} -> ru_state:move(Me, random_direction(Dir));
+                {HX, HY} -> ru_state:move(Me#mob.ref, random_direction(Dir));
                 _ ->
-                    case ru_state:move(Me, Dir) of
+                    case ru_state:move(Me#mob.ref, Dir) of
                         error -> 
-                            ru_state:move(Me, random_direction());
+                            ru_state:move(Me#mob.ref, random_direction());
                         ok -> ok
                     end
             end;
@@ -59,52 +59,57 @@ dog_brain(Event, Me) ->
     ru:redraw(brain).
 
 zombie_brain(Event, Me) ->
-    case Event of 
-        tick ->
-            random:seed(now()),
-            {MyLoc, _} = ru_world:mob_location(Me),
-            HeroLoc = ru_world:hero_location(),
-            {CX,CY} = MyLoc#world.loc,
-            {HX,HY} = HeroLoc#world.loc,
-            Distance = distance_between({CX,CY}, {HX,HY}),
-            if
-                %% if hero is less than 7 away, move towards
-                Distance < 7 ->
-                    DX = case HX - CX of
-                        0 -> 0; A when A >= 1 -> 1; A when A =< -1 -> -1
-                    end,
-                    DY = case HY - CY of
-                        0 -> 0; B when B >= 1 -> 1; B when B =< -1 -> -1
-                    end,
-                    Dir = ru_util:coordinate_delta_direction({DX,DY}),
-                    DoMove = true;
+%    case Me#mob.attackedby of
+%        nil ->
+            case Event of 
+                tick ->
+                    random:seed(now()),
+                    {MyLoc, _} = ru_world:mob_location(Me),
+                    HeroLoc = ru_world:hero_location(),
+                    {CX,CY} = MyLoc#world.loc,
+                    {HX,HY} = HeroLoc#world.loc,
+                    Distance = distance_between({CX,CY}, {HX,HY}),
+                    if
+                        %% if hero is less than 7 away, move towards
+                        Distance < 7 ->
+                            DX = case HX - CX of
+                                0 -> 0; A when A >= 1 -> 1; A when A =< -1 -> -1
+                            end,
+                            DY = case HY - CY of
+                                0 -> 0; B when B >= 1 -> 1; B when B =< -1 -> -1
+                            end,
+                            Dir = ru_util:coordinate_delta_direction({DX,DY}),
+                            DoMove = true;
 
-                %% meander if close to hero
-                Distance >= 7 ->
-                    case random:uniform(2) of
-                        1 -> 
-                            DoMove = false,
-                            Dir = nil;
-                        2 -> 
-                            DoMove = true,
-                            Dir = random_direction()
-                    end
-            end,
-            %% dont move on top of hero's square
-            case DoMove of
-                false -> ok;
-                true ->
-                    case ru_util:direction_coords({CX,CY}, Dir) of
-                        {HX, HY} -> ru_state:move(Me, random_direction(Dir));
-                        _ ->
-                            case ru_state:move(Me, Dir) of
-                                error -> 
-                                    ru_state:move(Me, random_direction());
-                                ok -> ok
+                        %% meander if close to hero
+                        Distance >= 7 ->
+                            case random:uniform(2) of
+                                1 -> 
+                                    DoMove = false,
+                                    Dir = nil;
+                                2 -> 
+                                    DoMove = true,
+                                    Dir = random_direction()
                             end
-                    end
-            end;
-        _ -> ok
+                    end,
+                    %% dont move on top of hero's square
+                    case DoMove of
+                        false -> ok;
+                        true ->
+                            case ru_util:direction_coords({CX,CY}, Dir) of
+                                {HX, HY} -> ru_state:move(Me#mob.ref, random_direction(Dir));
+                                _ ->
+                                    case ru_state:move(Me#mob.ref, Dir) of
+                                        error -> 
+                                            ru_state:move(Me#mob.ref, random_direction());
+                                        ok -> ok
+                                    end
+                            end
+                    end;
+                _ -> ok
+%            end;
+%        _ ->
+%            ?MSG(?PP("Somebody attack me!"))
     end,
     ru:redraw(brain).
 

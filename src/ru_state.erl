@@ -202,22 +202,26 @@ do_close_door(Direction) ->
     end.
 
 do_attack(hero, Direction) ->
-    do_rest_of_attack(ru_world:hero_location(), Direction);
+    do_rest_of_attack(hero, ru_world:hero_location(), Direction);
 do_attack(WhoRef, Direction) ->
-    do_rest_of_attack(ru_world:mob_location(WhoRef), Direction).
+    do_rest_of_attack(WhoRef, ru_world:mob_location(WhoRef), Direction).
 
-do_rest_of_attack(Current, Direction) ->
+do_rest_of_attack(Who, Current, Direction) ->
     case Current of
         nil -> ok;
         _ ->
             {DX, DY} = ru_util:direction_coords(Current#world.loc, Direction),            
             Square = ?GET({DX,DY}),
-            FindMob = fun(Elem) -> is_record(Elem, mob) end,            
-            Ret = case lists:any(FindMob, Square#world.stuff) of
-                true ->
+            FindMob = fun(Elem) -> is_record(Elem, mob) end,
+            Mobs = lists:filter(FindMob, Square#world.stuff),
+            Ret = case Mobs of
+                [Mob] ->
+                    Next = Mob#mob { attackedby = Who },
+                    ?MSG(?PP(Next)),
+                    ru_mobs:update(Next),
                     ?MSG("MOB THERE"),
                     ok;
-                false ->
+                [] ->
                     ?MSG("No mob there"),
                     nomob
             end,
