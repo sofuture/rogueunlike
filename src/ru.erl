@@ -13,7 +13,7 @@
 
 -author("Jeff Zellner <jeff.zellner@gmail.com>").
 
--include("cecho.hrl").
+-include("encurses.hrl").
 -include("ru.hrl").
 
 -export([go/0, die/0]).
@@ -180,7 +180,7 @@ fade_in_title(Title) ->
 
 splash_screen() ->
     encurses:erase(),
-    encurses:curs_set(?ceCURS_INVISIBLE),
+    encurses:curs_set(?CURS_INVISIBLE),
     {MX,MY} = ru_util:get_window_dimensions(),
     spiral(0, 0, 1, 0, 0, 0, MX-1, MY-1, 0),
     encurses:refresh(),

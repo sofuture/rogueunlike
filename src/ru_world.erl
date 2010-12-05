@@ -15,7 +15,7 @@
 
 -include_lib("stdlib/include/qlc.hrl").
 
--include("cecho.hrl").
+-include("encurses.hrl").
 -include("ru.hrl").
 
 -export([start/0, world_loop/1, database_test/0, redraw/1, init/1]).
@@ -28,7 +28,8 @@
 %% ============================================================================
 
 database_test() ->
-    ?MODULE ! {database_test, test}.
+    ?MODULE ! {database_test, self()},
+    ?WAITFOROK.
 
 redraw(Reason) ->
     ?MODULE ! {redraw, Reason}.
@@ -69,8 +70,9 @@ world_loop(State) ->
             world_loop(State#world_state{
                 win = Win, height = WinHeight, width = MaxX});
 
-        {database_test, _} ->
+        {database_test, Caller} ->
             create_test_world(),
+            Caller ! ok,
             world_loop(State);
 
         {find_hero, Caller} ->
@@ -103,7 +105,7 @@ world_loop(State) ->
 %% ============================================================================
 
 create_window(Height, Width) ->
-    encurses:curs_set(?ceCURS_INVISIBLE),
+    encurses:curs_set(?CURS_INVISIBLE),
     Win = encurses:newwin(Width, Height, 0, 0),
     encurses:refresh(Win),
     Win.
@@ -217,80 +219,10 @@ create_test_world() ->
     ok.
 
 test_world() ->
-    %    0123456789
-    %
-    % 0  ########
-    % 1  #......###
-    % 2  #........#
-    % 3  ######+###
-    % 4     #.....#
-    % 5     #.....#
-    % 6     #######
-
-    A = [#world{loc={0,0}, stuff=[wall]},
-    #world{loc={1,0}, stuff=[wall]},
-    #world{loc={2,0}, stuff=[wall]},
-    #world{loc={3,0}, stuff=[wall]},
-    #world{loc={4,0}, stuff=[wall]},
-    #world{loc={5,0}, stuff=[wall]},
-    #world{loc={6,0}, stuff=[wall]},
-    #world{loc={7,0}, stuff=[wall]},
-    #world{loc={8,0}, stuff=[wall]},
-    #world{loc={9,0}, stuff=[wall]},
-    #world{loc={0,1}, stuff=[wall]},
-    #world{loc={1,1}, stuff=[walkable]},
-    #world{loc={2,1}, stuff=[walkable]},
-    #world{loc={3,1}, stuff=[walkable]},
-    #world{loc={4,1}, stuff=[walkable]},
-    #world{loc={5,1}, stuff=[walkable]},
-    #world{loc={6,1}, stuff=[walkable]},
-    #world{loc={7,1}, stuff=[walkable]},
-    #world{loc={8,1}, stuff=[walkable]},
-    #world{loc={9,1}, stuff=[wall]},
-    #world{loc={0,2}, stuff=[wall]},
-    #world{loc={1,2}, stuff=[walkable]},
-    #world{loc={2,2}, stuff=[walkable]},
-    #world{loc={3,2}, stuff=[walkable]},
-    #world{loc={4,2}, stuff=[walkable]},
-    #world{loc={5,2}, stuff=[walkable]},
-    #world{loc={6,2}, stuff=[walkable]},
-    #world{loc={7,2}, stuff=[walkable]},
-    #world{loc={8,2}, stuff=[walkable]},
-    #world{loc={9,2}, stuff=[wall]},
-    #world{loc={0,3}, stuff=[wall]},
-    #world{loc={1,3}, stuff=[wall]},
-    #world{loc={2,3}, stuff=[wall]},
-    #world{loc={3,3}, stuff=[wall]},
-    #world{loc={4,3}, stuff=[wall]},
-    #world{loc={5,3}, stuff=[wall]},
-    #world{loc={6,3}, stuff=[door]},
-    #world{loc={7,3}, stuff=[wall]},
-    #world{loc={8,3}, stuff=[wall]},
-    #world{loc={9,3}, stuff=[wall]},
-    #world{loc={3,4}, stuff=[wall]},
-    #world{loc={4,4}, stuff=[walkable]},
-    #world{loc={5,4}, stuff=[walkable]},
-    #world{loc={6,4}, stuff=[walkable]},
-    #world{loc={7,4}, stuff=[walkable]},
-    #world{loc={8,4}, stuff=[walkable]},
-    #world{loc={9,4}, stuff=[wall]},
-    #world{loc={3,5}, stuff=[wall]},
-    #world{loc={4,5}, stuff=[walkable]},
-    #world{loc={5,5}, stuff=[walkable]},
-    #world{loc={6,5}, stuff=[walkable]},
-    #world{loc={7,5}, stuff=[walkable]},
-    #world{loc={8,5}, stuff=[walkable]},
-    #world{loc={9,5}, stuff=[wall]},
-    #world{loc={3,6}, stuff=[wall]},
-    #world{loc={4,6}, stuff=[wall]},
-    #world{loc={5,6}, stuff=[wall]},
-    #world{loc={6,6}, stuff=[wall]},
-    #world{loc={7,6}, stuff=[wall]},
-    #world{loc={8,6}, stuff=[wall]},
-    #world{loc={9,6}, stuff=[wall]}],
-    _B = generate_test_world(),
+    A = room_with_door(0,0,10,4,{9,1}),
+    B = room_with_door(3,3,7,4,{6,3}),
     C = room_with_door(9,0,20,10,{9,1}),
-    lists:append(A,C).
+    lists:append(A,lists:append(B,C)).
 
 %% ============================================================================
 %% Mnesia management
@@ -363,6 +295,39 @@ draw_pref(Thing) ->
             {5000, $+};
         wall ->
             {6000, $#};
+        wall_floating -> 
+            {6000, $#};
+        wall_l ->
+            {6000, ?ACS_HLINE};
+        wall_b ->
+            {6000, ?ACS_VLINE};
+        wall_bl ->
+            {6000, ?ACS_URCORNER};
+        wall_r ->
+            {6000, ?ACS_HLINE};
+        wall_rl ->
+            {6000, ?ACS_HLINE};
+        wall_rb ->
+            {6000, ?ACS_ULCORNER};
+        wall_rbl -> 
+            {6000, ?ACS_TTEE};
+        wall_t ->
+            {6000, ?ACS_VLINE};
+        wall_tl ->
+            {6000, ?ACS_LRCORNER};
+        wall_tb ->
+            {6000, ?ACS_VLINE};
+        wall_tbl -> 
+            {6000, ?ACS_RTEE};
+        wall_tr ->
+            {6000, ?ACS_LLCORNER};
+        wall_trl ->
+            {6000, ?ACS_BTEE};
+        wall_trb -> 
+            {6000, ?ACS_LTEE};
+        wall_trbl ->
+            {6000, ?ACS_PLUS};
+
         _ ->
             {10000, $\s}
 

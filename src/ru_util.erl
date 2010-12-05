@@ -13,7 +13,7 @@
 
 -author("Jeff Zellner <jeff.zellner@gmail.com>").
 
--include("cecho.hrl").
+-include("encurses.hrl").
 -include("ru.hrl").
 
 -export([get_window_dimensions/0, centering_coords/2, direction_coords/2]).

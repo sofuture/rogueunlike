@@ -13,7 +13,7 @@
 
 -author("Jeff Zellner <jeff.zellner@gmail.com>").
 
--include("cecho.hrl").
+-include("encurses.hrl").
 -include("ru.hrl").
 
 -export([help_menu/0, about_menu/0]).

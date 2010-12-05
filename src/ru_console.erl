@@ -13,7 +13,7 @@
 
 -author("Jeff Zellner <jeff.zellner@gmail.com>").
 
--include("cecho.hrl").
+-include("encurses.hrl").
 -include("ru.hrl").
 
 -export([create/1, char_stats/1, redraw/1, msg/1, exit/1]).
@@ -91,7 +91,7 @@ console_loop(Cons) ->
 %% ============================================================================
 
 create_console(Height) ->
-    encurses:curs_set(?ceCURS_INVISIBLE),
+    encurses:curs_set(?CURS_INVISIBLE),
     {MaxX, MaxY} = encurses:getmaxxy(),
     Win = encurses:newwin(MaxX, Height+1, 0, MaxY-(Height+1)),
     encurses:border(Win, ?CONSOLE_BORDERS),
