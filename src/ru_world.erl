@@ -125,15 +125,27 @@ draw_world(Win) ->
     encurses:refresh(Win),
     ok.
 
-get_world_square(Location) ->
-    Trans = fun() -> mnesia:read(world, Location) end,
+get_world_squares(Squares) when is_list(Squares) ->
+    Exists = fun(Loc) ->
+        IntExists = fun(Elem) ->
+            Elem#world.loc =:= Loc
+        end,
+        lists:any(IntExists, Squares)
+    end,
+    Q = qlc:q([X || X <- mnesia:table(world), Exists(X#world.loc)]),
+    F = fun() -> qlc:eval(Q) end,
+    {atomic, FoundSquares} = mnesia:transaction(F),
+    FoundSquares.
+
+get_world_square(Loc) ->
+    Trans = fun() -> mnesia:read(world, Loc) end,
     {atomic, [Square]} = mnesia:transaction(Trans),
     Square.
 
 find_hero() ->
     Q = qlc:q([X || 
-            X = #world{stuff=Stuff} <- mnesia:table(world),
-            proplists:get_bool(hero, Stuff)]),
+        X = #world{stuff=Stuff} <- mnesia:table(world),
+        proplists:get_bool(hero, Stuff)]),
     F = fun() -> qlc:eval(Q) end,
     case mnesia:transaction(F) of
         {atomic, [Square]} -> Square;
@@ -148,11 +160,11 @@ find_mob(MobRef) ->
         end
     end,
     Q = qlc:q([X ||
-            X = #world{stuff=Stuff} <- mnesia:table(world),
-            case proplists:lookup_all(mob, Stuff) of
-                [] -> false;
-                List -> lists:any(FindMe, List)
-            end]),
+        X = #world{stuff=Stuff} <- mnesia:table(world),
+        case proplists:lookup_all(mob, Stuff) of
+            [] -> false;
+            List -> lists:any(FindMe, List)
+        end]),
     F = fun() -> qlc:eval(Q) end,
     case mnesia:transaction(F) of
         {atomic, [Square]} -> 
@@ -292,41 +304,6 @@ draw_pref(Thing) ->
             {4000, $\s};
         door ->
             {5000, $+};
-        wall ->
-            {6000, $#};
-        wall_floating -> 
-            {6000, $#};
-
-        wall_l ->
-            {6000, ?ACS_HLINE};
-        wall_b ->
-            {6000, ?ACS_VLINE};
-        wall_bl ->
-            {6000, ?ACS_URCORNER};
-        wall_r ->
-            {6000, ?ACS_HLINE};
-        wall_rl ->
-            {6000, ?ACS_HLINE};
-        wall_rb ->
-            {6000, ?ACS_ULCORNER};
-        wall_rbl -> 
-            {6000, ?ACS_TTEE};
-        wall_t ->
-            {6000, ?ACS_VLINE};
-        wall_tl ->
-            {6000, ?ACS_LRCORNER};
-        wall_tb ->
-            {6000, ?ACS_VLINE};
-        wall_tbl -> 
-            {6000, ?ACS_RTEE};
-        wall_tr ->
-            {6000, ?ACS_LLCORNER};
-        wall_lrb ->
-            {6000, ?ACS_BTEE};
-        wall_tlb -> 
-            {6000, ?ACS_LTEE};
-        wall_trbl ->
-            {6000, ?ACS_PLUS};
 
         wall_ulcorner ->
             {6000, ?ACS_ULCORNER};
@@ -336,11 +313,28 @@ draw_pref(Thing) ->
             {6000, ?ACS_LLCORNER};
         wall_lrcorner ->
             {6000, ?ACS_LRCORNER};
+        
+        wall_cross -> 
+            {6000, ?ACS_PLUS};
+
+        wall_ttee ->
+            {6000, ?ACS_TTEE};
+        wall_btee ->
+            {6000, ?ACS_BTEE};
+        wall_ltee ->
+            {6000, ?ACS_LTEE};
+        wall_rtee ->
+            {6000, ?ACS_RTEE};
 
         wall_hline ->
             {6000, ?ACS_HLINE};
         wall_vline ->
             {6000, ?ACS_VLINE};
+
+        wall ->
+            {6001, $#};
+        wall_floating -> 
+            {6001, $#};
 
         _ ->
             {10000, $\s}
@@ -376,7 +370,10 @@ room(X, Y, I, J) ->
     Left = col(X, Y+1, J-2, [wall_vline]),
     Right = col(X+I-1, Y+1, J-2, [wall_vline]),
     Grid = grid(X + 1, Y + 1, I - 2, J - 2, [walkable]),
-    lists:flatten([Top, Bottom, Left, Right, Corners, Grid]).
+    All = lists:flatten([Top, Bottom, Left, Right, Corners, Grid]),
+    Existing = get_world_squares(All),
+    lists:foreach(fun(Elem) -> ?MSG(?PP(Elem)) end, Existing),
+    All.
 
 room_with_door(X, Y, I, J, {DoorX, DoorY}) ->
     [#world{loc={DoorX, DoorY}, stuff=[door]} | 
