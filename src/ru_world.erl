@@ -289,13 +289,14 @@ draw_pref(Thing) ->
 
         %% infrastructureystuff
         walkable -> 
-            {4000, $.};
+            {4000, $\s};
         door ->
             {5000, $+};
         wall ->
             {6000, $#};
         wall_floating -> 
             {6000, $#};
+
         wall_l ->
             {6000, ?ACS_HLINE};
         wall_b ->
@@ -320,12 +321,26 @@ draw_pref(Thing) ->
             {6000, ?ACS_RTEE};
         wall_tr ->
             {6000, ?ACS_LLCORNER};
-        wall_trl ->
+        wall_lrb ->
             {6000, ?ACS_BTEE};
-        wall_trb -> 
+        wall_tlb -> 
             {6000, ?ACS_LTEE};
         wall_trbl ->
             {6000, ?ACS_PLUS};
+
+        wall_ulcorner ->
+            {6000, ?ACS_ULCORNER};
+        wall_urcorner ->
+            {6000, ?ACS_URCORNER};
+        wall_llcorner ->
+            {6000, ?ACS_LLCORNER};
+        wall_lrcorner ->
+            {6000, ?ACS_LRCORNER};
+
+        wall_hline ->
+            {6000, ?ACS_HLINE};
+        wall_vline ->
+            {6000, ?ACS_VLINE};
 
         _ ->
             {10000, $\s}
@@ -351,11 +366,17 @@ grid(X, Y, I, J, Type) ->
     grid(X + 1, Y, I - 1, J, Type).
 
 room(X, Y, I, J) ->
-    row(X, Y, I, [wall]) ++ % top
-    row(X, Y + J - 1, I, [wall]) ++ % bottom
-    col(X, Y + 1, J - 2, [wall]) ++ % left
-    col(X + I - 1, Y + 1, J - 2, [wall]) ++ % right
-    grid(X + 1, Y + 1, I - 2, J - 2, [walkable]).
+    Corners = [
+        #world{ loc = {X, Y}, stuff=[wall_ulcorner] },
+        #world{ loc = {X+I-1, Y}, stuff=[wall_urcorner] },
+        #world{ loc = {X, Y+J-1}, stuff=[wall_llcorner] },
+        #world{ loc = {X+I-1, Y+J-1}, stuff=[wall_lrcorner] }],
+    Top = row(X+1, Y, I-1, [wall_hline]),
+    Bottom = row(X+1, Y+J-1, I-1, [wall_hline]),
+    Left = col(X, Y+1, J-2, [wall_vline]),
+    Right = col(X+I-1, Y+1, J-2, [wall_vline]),
+    Grid = grid(X + 1, Y + 1, I - 2, J - 2, [walkable]),
+    lists:flatten([Top, Bottom, Left, Right, Corners, Grid]).
 
 room_with_door(X, Y, I, J, {DoorX, DoorY}) ->
     [#world{loc={DoorX, DoorY}, stuff=[door]} | 

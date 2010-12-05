@@ -136,7 +136,7 @@ start_self() ->
     ok.
 
 spiral(X,Y, DX, DY, MinX, MinY, MaxX, MaxY, Acc) ->
-    encurses:mvaddch(X,Y,$=),
+    encurses:mvaddch(X,Y,?ACS_CKBOARD),
     Acc1 = case Acc of
         5 -> 
             timer:sleep(1),
