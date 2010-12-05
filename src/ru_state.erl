@@ -217,7 +217,6 @@ do_rest_of_attack(Who, Current, Direction) ->
             Ret = case Mobs of
                 [Mob] ->
                     Next = Mob#mob { attackedby = Who },
-                    ?MSG(?PP(Next)),
                     ru_mobs:update(Next),
                     ?MSG("MOB THERE"),
                     ok;

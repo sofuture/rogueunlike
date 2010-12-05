@@ -59,57 +59,52 @@ dog_brain(Event, Me) ->
     ru:redraw(brain).
 
 zombie_brain(Event, Me) ->
-%    case Me#mob.attackedby of
-%        nil ->
-            case Event of 
-                tick ->
-                    random:seed(now()),
-                    {MyLoc, _} = ru_world:mob_location(Me),
-                    HeroLoc = ru_world:hero_location(),
-                    {CX,CY} = MyLoc#world.loc,
-                    {HX,HY} = HeroLoc#world.loc,
-                    Distance = distance_between({CX,CY}, {HX,HY}),
-                    if
-                        %% if hero is less than 7 away, move towards
-                        Distance < 7 ->
-                            DX = case HX - CX of
-                                0 -> 0; A when A >= 1 -> 1; A when A =< -1 -> -1
-                            end,
-                            DY = case HY - CY of
-                                0 -> 0; B when B >= 1 -> 1; B when B =< -1 -> -1
-                            end,
-                            Dir = ru_util:coordinate_delta_direction({DX,DY}),
-                            DoMove = true;
-
-                        %% meander if close to hero
-                        Distance >= 7 ->
-                            case random:uniform(2) of
-                                1 -> 
-                                    DoMove = false,
-                                    Dir = nil;
-                                2 -> 
-                                    DoMove = true,
-                                    Dir = random_direction()
-                            end
+    case Event of 
+        tick ->
+            random:seed(now()),
+            {MyLoc, _} = ru_world:mob_location(Me#mob.ref),
+            HeroLoc = ru_world:hero_location(),
+            {CX,CY} = MyLoc#world.loc,
+            {HX,HY} = HeroLoc#world.loc,
+            Distance = distance_between({CX,CY}, {HX,HY}),
+            if
+                %% if hero is less than 7 away, move towards
+                Distance < 7 ->
+                    DX = case HX - CX of
+                        0 -> 0; A when A >= 1 -> 1; A when A =< -1 -> -1
                     end,
-                    %% dont move on top of hero's square
-                    case DoMove of
-                        false -> ok;
-                        true ->
-                            case ru_util:direction_coords({CX,CY}, Dir) of
-                                {HX, HY} -> ru_state:move(Me#mob.ref, random_direction(Dir));
-                                _ ->
-                                    case ru_state:move(Me#mob.ref, Dir) of
-                                        error -> 
-                                            ru_state:move(Me#mob.ref, random_direction());
-                                        ok -> ok
-                                    end
+                    DY = case HY - CY of
+                        0 -> 0; B when B >= 1 -> 1; B when B =< -1 -> -1
+                    end,
+                    Dir = ru_util:coordinate_delta_direction({DX,DY}),
+                    DoMove = true;
+
+                %% meander if close to hero
+                Distance >= 7 ->
+                    case random:uniform(2) of
+                        1 -> 
+                            DoMove = false,
+                            Dir = nil;
+                        2 -> 
+                            DoMove = true,
+                            Dir = random_direction()
+                    end
+            end,
+            %% dont move on top of hero's square
+            case DoMove of
+                false -> ok;
+                true ->
+                    case ru_util:direction_coords({CX,CY}, Dir) of
+                        {HX, HY} -> ru_state:move(Me#mob.ref, random_direction(Dir));
+                        _ ->
+                            case ru_state:move(Me#mob.ref, Dir) of
+                                error -> 
+                                    ru_state:move(Me#mob.ref, random_direction());
+                                ok -> ok
                             end
-                    end;
-                _ -> ok
-%            end;
-%        _ ->
-%            ?MSG(?PP("Somebody attack me!"))
+                    end
+            end;
+        _ -> ok
     end,
     ru:redraw(brain).
 
