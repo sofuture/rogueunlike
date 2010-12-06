@@ -275,6 +275,49 @@ is_fresh_startup() ->
             is_fresh_startup()
     end.
 
+%% ============================================================================
+%% Map Generation
+%% ============================================================================
+
+row(X, Y, N, Type) ->
+    [#world{loc={I,Y}, stuff=Type} ||
+        I <- lists:seq(X, X+N-1)].
+
+col(X, Y, N, Type) ->
+    [#world{loc={X,J}, stuff=Type} ||
+        J <- lists:seq(Y, Y+N-1)].
+
+grid(X, Y, 1, J, Type) ->
+    col(X, Y, J, Type);
+grid(X, Y, I, J, Type) ->
+    col(X, Y, J, Type) ++
+    grid(X + 1, Y, I - 1, J, Type).
+
+room(X, Y, I, J) ->
+    Corners = [
+        #world{ loc = {X, Y}, stuff=[wall_ulcorner] },
+        #world{ loc = {X+I-1, Y}, stuff=[wall_urcorner] },
+        #world{ loc = {X, Y+J-1}, stuff=[wall_llcorner] },
+        #world{ loc = {X+I-1, Y+J-1}, stuff=[wall_lrcorner] }],
+    Top = row(X+1, Y, I-1, [wall_hline]),
+    Bottom = row(X+1, Y+J-1, I-1, [wall_hline]),
+    Left = col(X, Y+1, J-2, [wall_vline]),
+    Right = col(X+I-1, Y+1, J-2, [wall_vline]),
+    Grid = grid(X + 1, Y + 1, I - 2, J - 2, [walkable]),
+    All = lists:flatten([Top, Bottom, Left, Right, Corners, Grid]),
+    Existing = get_world_squares(All),
+    lists:foreach(fun(Elem) -> ?MSG(?PP(Elem)) end, Existing),
+    reconcile(Existing, All).
+
+reconcile(Old, New) ->
+    New.
+
+room_with_door(X, Y, I, J, {DoorX, DoorY}) ->
+    [#world{loc={DoorX, DoorY}, stuff=[door]} | 
+        [World || World <- room(X, Y, I, J),
+            World#world.loc /= {DoorX, DoorY}]
+    ].
+
 draw_pref(Thing) ->
     case Thing of
         
@@ -340,44 +383,4 @@ draw_pref(Thing) ->
             {10000, $\s}
 
     end.
-
-%% ============================================================================
-%% Map Generation
-%% ============================================================================
-
-row(X, Y, N, Type) ->
-    [#world{loc={I,Y}, stuff=Type} ||
-        I <- lists:seq(X, X+N-1)].
-
-col(X, Y, N, Type) ->
-    [#world{loc={X,J}, stuff=Type} ||
-        J <- lists:seq(Y, Y+N-1)].
-
-grid(X, Y, 1, J, Type) ->
-    col(X, Y, J, Type);
-grid(X, Y, I, J, Type) ->
-    col(X, Y, J, Type) ++
-    grid(X + 1, Y, I - 1, J, Type).
-
-room(X, Y, I, J) ->
-    Corners = [
-        #world{ loc = {X, Y}, stuff=[wall_ulcorner] },
-        #world{ loc = {X+I-1, Y}, stuff=[wall_urcorner] },
-        #world{ loc = {X, Y+J-1}, stuff=[wall_llcorner] },
-        #world{ loc = {X+I-1, Y+J-1}, stuff=[wall_lrcorner] }],
-    Top = row(X+1, Y, I-1, [wall_hline]),
-    Bottom = row(X+1, Y+J-1, I-1, [wall_hline]),
-    Left = col(X, Y+1, J-2, [wall_vline]),
-    Right = col(X+I-1, Y+1, J-2, [wall_vline]),
-    Grid = grid(X + 1, Y + 1, I - 2, J - 2, [walkable]),
-    All = lists:flatten([Top, Bottom, Left, Right, Corners, Grid]),
-    Existing = get_world_squares(All),
-    lists:foreach(fun(Elem) -> ?MSG(?PP(Elem)) end, Existing),
-    All.
-
-room_with_door(X, Y, I, J, {DoorX, DoorY}) ->
-    [#world{loc={DoorX, DoorY}, stuff=[door]} | 
-        [World || World <- room(X, Y, I, J),
-            World#world.loc /= {DoorX, DoorY}]
-    ].
 
