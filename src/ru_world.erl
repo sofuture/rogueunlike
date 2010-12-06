@@ -307,10 +307,69 @@ room(X, Y, I, J) ->
     All = lists:flatten([Top, Bottom, Left, Right, Corners, Grid]),
     Existing = get_world_squares(All),
     lists:foreach(fun(Elem) -> ?MSG(?PP(Elem)) end, Existing),
-    reconcile(Existing, All).
+    reconcile_squares(Existing, All).
 
-reconcile(Old, New) ->
-    New.
+reconcile_squares(Old, New) ->
+    reconcile_squares(Old, New, []).
+
+reconcile_squares(Old, [], Acc) ->
+    Acc;
+reconcile_squares(Old, [Current | Tail], Acc) ->
+    SameLoc = fun(Elem) ->
+        Elem#world.loc =:= Current#world.loc
+    end,
+    case lists:filter(SameLoc, Old) of
+        [] -> reconcile_squares(Old, Tail, [Current | Acc]);
+        [Sq] ->
+            IsUL = Sq#world.stuff =:= [wall_ulcorner],
+            IsUR = Sq#world.stuff =:= [wall_urcorner],
+            IsLL = Sq#world.stuff =:= [wall_llcorner],
+            IsLR = Sq#world.stuff =:= [wall_lrcorner],
+            IsHL = Sq#world.stuff =:= [wall_hline],
+            IsVL = Sq#world.stuff =:= [wall_vline],
+            IsUL1 = Current#world.stuff =:= [wall_ulcorner],
+            IsUR1 = Current#world.stuff =:= [wall_urcorner],
+            IsLL1 = Current#world.stuff =:= [wall_llcorner],
+            IsLR1 = Current#world.stuff =:= [wall_lrcorner],
+            IsHL1 = Current#world.stuff =:= [wall_hline],
+            IsVL1 = Current#world.stuff =:= [wall_vline],
+            New = if
+
+                IsUL andalso IsUL1 -> wall_ulcorner;
+                IsUL andalso IsUR1 -> wall_btee;
+                IsUL andalso IsLL1 -> wall_rtee;
+                IsUL andalso IsLR1 -> wall_cross;
+                IsUL andalso IsHL1 -> wall_btee;
+                IsUL andalso IsVL1 -> wall_rtee;
+                
+                IsUR andalso IsUL1 -> wall_btee;
+                IsUR andalso IsUR1 -> wall_urcorner;
+                IsUR andalso IsLL1 -> wall_rtee;
+                IsUR andalso IsLR1 -> wall_cross;
+                IsUR andalso IsHL1 -> wall_btee;
+                IsUR andalso IsVL1 -> wall_rtee;
+                
+                IsLL andalso IsUL1 -> wall_rtee;
+                IsLL andalso IsUR1 -> wall_cross;
+                IsLL andalso IsLL1 -> wall_llcorner;
+                IsLL andalso IsLR1 -> wall_ttee;
+                IsLL andalso IsHL1 -> wall_ttee;
+                IsLL andalso IsVL1 -> wall_rtee;
+                
+                IsLR andalso IsUL1 -> wall_cross;
+                IsLR andalso IsUR1 -> wall_urcorner;
+                IsLR andalso IsLL1 -> wall_rtee;
+                IsLR andalso IsLR1 -> wall_cross;
+                IsLR andalso IsHL1 -> wall_btee;
+                IsLR andalso IsVL1 -> wall_rtee;
+                true -> wall
+            end,
+
+            Next = Current#world { 
+                stuff = [New] %lists:append(Current#world.stuff, Sq#world.stuff)
+                },
+            reconcile_squares(Old, Tail, [Next | Acc])
+    end.
 
 room_with_door(X, Y, I, J, {DoorX, DoorY}) ->
     [#world{loc={DoorX, DoorY}, stuff=[door]} | 
