@@ -357,11 +357,26 @@ reconcile_squares(Old, [Current | Tail], Acc) ->
                 IsLL andalso IsVL1 -> wall_rtee;
                 
                 IsLR andalso IsUL1 -> wall_cross;
-                IsLR andalso IsUR1 -> wall_urcorner;
-                IsLR andalso IsLL1 -> wall_rtee;
-                IsLR andalso IsLR1 -> wall_cross;
-                IsLR andalso IsHL1 -> wall_btee;
-                IsLR andalso IsVL1 -> wall_rtee;
+                IsLR andalso IsUR1 -> wall_ltee;
+                IsLR andalso IsLL1 -> wall_ttee;
+                IsLR andalso IsLR1 -> wall_lrcorner;
+                IsLR andalso IsHL1 -> wall_ttee;
+                IsLR andalso IsVL1 -> wall_ltee;
+
+                IsHL andalso IsUL1 -> wall_btee;
+                IsHL andalso IsUR1 -> wall_btee;
+                IsHL andalso IsLL1 -> wall_ttee;
+                IsHL andalso IsLR1 -> wall_ttee;
+                IsHL andalso IsHL1 -> wall_hline;
+                IsHL andalso IsVL1 -> wall_cross;
+
+                IsVL andalso IsUL1 -> wall_rtee;
+                IsVL andalso IsUR1 -> wall_ltee;
+                IsVL andalso IsLL1 -> wall_rtee;
+                IsVL andalso IsLR1 -> wall_ltee;
+                IsVL andalso IsHL1 -> wall_cross;
+                IsVL andalso IsVL1 -> wall_vline;
+
                 true -> wall
             end,
 

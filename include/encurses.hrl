@@ -52,8 +52,8 @@
 -define(ACS_S9, 4194419).
 -define(ACS_LTEE, 4194420).
 -define(ACS_RTEE, 4194421).
--define(ACS_BTEE, 4194422).
--define(ACS_TTEE, 4194423).
+-define(ACS_BTEE, 4194423).
+-define(ACS_TTEE, 4194422).
 -define(ACS_VLINE, 4194424).
 -define(ACS_LEQUAL, 4194425).
 -define(ACS_GEQUAL, 4194426).
