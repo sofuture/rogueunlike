@@ -299,8 +299,8 @@ room(X, Y, I, J) ->
         #world{ loc = {X+I-1, Y}, stuff=[wall_urcorner] },
         #world{ loc = {X, Y+J-1}, stuff=[wall_llcorner] },
         #world{ loc = {X+I-1, Y+J-1}, stuff=[wall_lrcorner] }],
-    Top = row(X+1, Y, I-1, [wall_hline]),
-    Bottom = row(X+1, Y+J-1, I-1, [wall_hline]),
+    Top = row(X+1, Y, I-2, [wall_hline]),
+    Bottom = row(X+1, Y+J-1, I-2, [wall_hline]),
     Left = col(X, Y+1, J-2, [wall_vline]),
     Right = col(X+I-1, Y+1, J-2, [wall_vline]),
     Grid = grid(X + 1, Y + 1, I - 2, J - 2, [walkable]),
@@ -308,6 +308,48 @@ room(X, Y, I, J) ->
     Existing = get_world_squares(All),
     lists:foreach(fun(Elem) -> ?MSG(?PP(Elem)) end, Existing),
     reconcile_squares(Existing, All).
+
+has_top([]) -> false;
+has_top([Head|T]) ->
+    case Head of
+        Wall when Wall =:= wall_llcorner orelse Wall =:= wall_lrcorner 
+            orelse Wall =:= wall_cross orelse Wall =:= wall_btee
+            orelse Wall =:= wall_ltee orelse Wall =:= wall_rtee
+            orelse Wall =:= wall_vline -> true;
+        _ -> has_top(T)
+    end.
+
+has_right([]) -> false;
+has_right([Head|T]) ->
+    case Head of
+        Wall when Wall =:= wall_ulcorner orelse Wall =:= wall_llcorner 
+            orelse Wall =:= wall_cross orelse Wall =:= wall_ttee
+            orelse Wall =:= wall_btee orelse Wall =:= wall_ltee
+            orelse Wall =:= wall_hline -> true;
+        _ -> has_right(T)
+    end.
+
+has_bottom([]) -> false;
+has_bottom([Head|T]) ->
+    case Head of
+        Wall when Wall =:= wall_ulcorner orelse Wall =:= wall_urcorner 
+            orelse Wall =:= wall_cross orelse Wall =:= wall_ttee
+            orelse Wall =:= wall_ltee orelse Wall =:= wall_rtee
+            orelse Wall =:= wall_vline ->
+                true;
+        _ -> has_top(T)
+    end.
+
+has_left([]) -> false;
+has_left([Head|T]) ->
+    case Head of
+        Wall when Wall =:= wall_urcorner orelse Wall =:= wall_lrcorner 
+            orelse Wall =:= wall_cross orelse Wall =:= wall_ttee
+            orelse Wall =:= wall_btee orelse Wall =:= wall_rtee
+            orelse Wall =:= wall_hline ->
+                true;
+        _ -> has_top(T)
+    end.
 
 reconcile_squares(Old, New) ->
     reconcile_squares(Old, New, []).
@@ -318,72 +360,50 @@ reconcile_squares(Old, [Current | Tail], Acc) ->
     SameLoc = fun(Elem) ->
         Elem#world.loc =:= Current#world.loc
     end,
+
     case lists:filter(SameLoc, Old) of
         [] -> reconcile_squares(Old, Tail, [Current | Acc]);
         [Sq] ->
-            IsUL = Sq#world.stuff =:= [wall_ulcorner],
-            IsUR = Sq#world.stuff =:= [wall_urcorner],
-            IsLL = Sq#world.stuff =:= [wall_llcorner],
-            IsLR = Sq#world.stuff =:= [wall_lrcorner],
-            IsHL = Sq#world.stuff =:= [wall_hline],
-            IsVL = Sq#world.stuff =:= [wall_vline],
-            IsUL1 = Current#world.stuff =:= [wall_ulcorner],
-            IsUR1 = Current#world.stuff =:= [wall_urcorner],
-            IsLL1 = Current#world.stuff =:= [wall_llcorner],
-            IsLR1 = Current#world.stuff =:= [wall_lrcorner],
-            IsHL1 = Current#world.stuff =:= [wall_hline],
-            IsVL1 = Current#world.stuff =:= [wall_vline],
+            SqTop = has_top(Sq#world.stuff),
+            SqRight = has_right(Sq#world.stuff),
+            SqBottom = has_bottom(Sq#world.stuff),
+            SqLeft = has_left(Sq#world.stuff),
+            CurTop = SqTop or has_top(Current#world.stuff),
+            CurRight = SqRight or has_right(Current#world.stuff),
+            CurBottom = SqBottom or has_bottom(Current#world.stuff),
+            CurLeft = SqLeft or has_left(Current#world.stuff),
+
             New = if
+                CurTop andalso CurRight andalso CurBottom andalso CurLeft ->
+                    wall_cross;
 
-                IsUL andalso IsUL1 -> wall_ulcorner;
-                IsUL andalso IsUR1 -> wall_btee;
-                IsUL andalso IsLL1 -> wall_rtee;
-                IsUL andalso IsLR1 -> wall_cross;
-                IsUL andalso IsHL1 -> wall_btee;
-                IsUL andalso IsVL1 -> wall_rtee;
-                
-                IsUR andalso IsUL1 -> wall_btee;
-                IsUR andalso IsUR1 -> wall_urcorner;
-                IsUR andalso IsLL1 -> wall_rtee;
-                IsUR andalso IsLR1 -> wall_cross;
-                IsUR andalso IsHL1 -> wall_btee;
-                IsUR andalso IsVL1 -> wall_rtee;
-                
-                IsLL andalso IsUL1 -> wall_rtee;
-                IsLL andalso IsUR1 -> wall_cross;
-                IsLL andalso IsLL1 -> wall_llcorner;
-                IsLL andalso IsLR1 -> wall_ttee;
-                IsLL andalso IsHL1 -> wall_ttee;
-                IsLL andalso IsVL1 -> wall_rtee;
-                
-                IsLR andalso IsUL1 -> wall_cross;
-                IsLR andalso IsUR1 -> wall_ltee;
-                IsLR andalso IsLL1 -> wall_ttee;
-                IsLR andalso IsLR1 -> wall_lrcorner;
-                IsLR andalso IsHL1 -> wall_ttee;
-                IsLR andalso IsVL1 -> wall_ltee;
+                CurTop andalso CurRight andalso CurBottom andalso not CurLeft ->
+                    wall_ltee;
+                CurTop andalso CurRight andalso not CurBottom andalso CurLeft ->
+                    wall_btee;
+                CurTop andalso not CurRight andalso CurBottom andalso CurLeft ->
+                    wall_rtee;
+                not CurTop andalso CurRight andalso CurBottom andalso CurLeft ->
+                    wall_ttee;
 
-                IsHL andalso IsUL1 -> wall_btee;
-                IsHL andalso IsUR1 -> wall_btee;
-                IsHL andalso IsLL1 -> wall_ttee;
-                IsHL andalso IsLR1 -> wall_ttee;
-                IsHL andalso IsHL1 -> wall_hline;
-                IsHL andalso IsVL1 -> wall_cross;
+                not CurTop andalso not CurRight andalso CurBottom andalso CurLeft ->
+                    wall_urcorner;
+                not CurTop andalso CurRight andalso CurBottom andalso not CurLeft ->
+                    wall_ulcorner;
+                CurTop andalso not CurRight andalso not CurBottom andalso CurLeft ->
+                    wall_lrcorner;
+                CurTop andalso CurRight andalso not CurBottom andalso not CurLeft ->
+                    wall_llcorner;
 
-                IsVL andalso IsUL1 -> wall_rtee;
-                IsVL andalso IsUR1 -> wall_ltee;
-                IsVL andalso IsLL1 -> wall_rtee;
-                IsVL andalso IsLR1 -> wall_ltee;
-                IsVL andalso IsHL1 -> wall_cross;
-                IsVL andalso IsVL1 -> wall_vline;
+                not CurTop andalso CurRight andalso not CurBottom andalso CurLeft ->
+                    wall_hline;
+                CurTop andalso not CurRight andalso CurBottom andalso not CurLeft ->
+                    wall_vline;
 
                 true -> wall
             end,
 
-            Next = Current#world { 
-                stuff = [New] %lists:append(Current#world.stuff, Sq#world.stuff)
-                },
-            reconcile_squares(Old, Tail, [Next | Acc])
+            reconcile_squares(Old, Tail, [Current#world{stuff=[New]} | Acc])
     end.
 
 room_with_door(X, Y, I, J, {DoorX, DoorY}) ->
