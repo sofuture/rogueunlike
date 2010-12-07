@@ -39,13 +39,13 @@ start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 create(Height) ->
-    gen_server:cast(?MODULE, {create, Height}).
+    gen_server:call(?MODULE, {create, Height}).
 
 redraw(Reason) ->
-    gen_server:cast(?MODULE, {redraw, Reason}).
+    gen_server:call(?MODULE, {redraw, Reason}).
 
 message(Message) ->
-    gen_server:cast(?MODULE, {message, Message}).
+    gen_server:call(?MODULE, {message, Message}).
 
 %% ============================================================================
 %% gen_server Behaviour
@@ -54,6 +54,12 @@ message(Message) ->
 init([]) ->
     {ok, #state{}}.
 
+handle_call({create, Height}, _From, State) ->
+    {reply, ok, do_create_console(State, Height)};
+handle_call({redraw, _Reason}, _From, State) ->
+    {reply, ok, do_redraw(State)};
+handle_call({message, Message}, _From, State) ->
+    {reply, ok, do_message(State, Message)};
 handle_call(_, _, State) ->
     {noreply, State}.
 
