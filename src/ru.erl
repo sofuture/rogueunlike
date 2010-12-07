@@ -127,7 +127,9 @@ start_systems() ->
     ru_input:start(),
     ru_world:start(),
     ru_state:start(),
-    ru_mobs:start(),
+%    application:start(ru_mobs),
+    application:start(rogueunlike),
+    %ru_mobs:start(),
     start_self().
 
 start_self() ->

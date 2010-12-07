@@ -311,7 +311,6 @@ room(X, Y, I, J) ->
     Grid = grid(X + 1, Y + 1, I - 2, J - 2, [walkable]),
     All = lists:flatten([Top, Bottom, Left, Right, Corners, Grid]),
     Existing = get_world_squares(All),
-    lists:foreach(fun(Elem) -> ?MSG(?PP(Elem)) end, Existing),
     reconcile_squares(Existing, All).
 
 has_top([]) -> false;

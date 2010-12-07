@@ -16,55 +16,57 @@
 -include("encurses.hrl").
 -include("ru.hrl").
 
--export([start/0]).
+-behaviour(gen_server).
+
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
+        code_change/3]).
+
+-export([start_link/0]).
 -export([tick/0, add/1, update/1]).
--export([state_loop/1]).
 
 %% ============================================================================
 %% Module API
 %% ============================================================================
 
-tick() ->
-    ?MODULE ! {tick, self()},
-    ?WAITFOROK.
+start_link() ->
+    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
-add(#mob{} = Mob) ->
-    ?MODULE ! {add, self(), Mob},
-    ?WAITFOROK.
+tick() ->
+    gen_server:call(?MODULE, tick).
+
+add(Mob) when is_record(Mob, mob) ->
+    gen_server:call(?MODULE, {add, Mob}).
 
 update(#mob{} = Mob) ->
-    ?MODULE ! {update, self(), Mob},
-    ?WAITFOROK.
+    gen_server:call(?MODULE, {update, Mob}).
 
 %% ============================================================================
-%% Application Behavior
+%% gen_server Behaviour
 %% ============================================================================
 
-start() ->
-    true = register(?MODULE,
-        spawn(?MODULE, state_loop, [[]])).
+init([]) ->
+    {ok, []}.
 
-state_loop(State) ->
-    receive
-        {tick, Caller} ->
-            tick(State),
-            Caller ! ok,
-            state_loop(State);
+handle_call(tick, _From, State) ->
+    {reply, tick(State), State};
+handle_call({add, Mob}, _From, State) ->
+    {reply, ok, [Mob|State]};
+handle_call({update, Mob}, _From, State) ->
+    {reply, ok, update_mob(Mob, State)};
+handle_call(What, _From, State) ->
+    io:format(?PP(What)).
 
-        {add, Caller, Mob} ->
-            Caller ! ok,
-            state_loop([Mob | State]);
+handle_cast(Msg, State) ->
+    {noreply, State}.
 
-        {update, Caller, Mob} ->
-            Caller ! ok,
-            state_loop(update_mob(Mob, State));
-        
-        {exit, _} -> 
-            ok;
+handle_info(Info, State) ->
+    {noreply, State}.
 
-        _ -> 
-            state_loop(State)
-    end.
+terminate(_Reason, _State) ->
+    ok.
+
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.
 
 %% ============================================================================
 %% Internal Functions

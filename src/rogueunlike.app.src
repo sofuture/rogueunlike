@@ -3,7 +3,8 @@
  [{description, "entirely not exactly unlike a rogue"},
   {vsn, "0.30.0"},
   {modules, []},
+  {registered, [ru_sup]},
   {env, []},
-  {mod, {ru, []}}
+  {mod, {ru_app, []}}
  ]}.
 
