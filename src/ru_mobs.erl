@@ -44,8 +44,8 @@ update(#mob{} = Mob) ->
 %% gen_server Behaviour
 %% ============================================================================
 
-init([]) ->
-    {ok, []}.
+init(State) ->
+    {ok, State}.
 
 handle_call(tick, _From, State) ->
     {reply, tick(State), State};

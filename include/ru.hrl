@@ -14,13 +14,6 @@
         height = 0, 
         width = 0}).
 
--record(console_state, {
-        win = nil, 
-        lines = [],
-        statline = [],
-        height = 0, 
-        width = 0}).
-
 -record(world, {
         loc = nil,
         stuff = [],
@@ -53,7 +46,7 @@
 -define(CONSOLE_BORDERS, $\s, $\s, $=, $\s, $=, $=, $\s, $\s).
 
 -define(PP(X), io_lib:format("~p", [X])).
--define(MSG(X), ru_console:msg(X)).
+-define(MSG(X), ru_console:message(X)).
 
 -define(ISDIR(A), A =:= kp_n orelse 
                   A =:= kp_s orelse 

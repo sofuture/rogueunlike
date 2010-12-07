@@ -16,66 +16,91 @@
 -include("encurses.hrl").
 -include("ru.hrl").
 
--export([create/1, redraw/1, msg/1, exit/1]).
--export([start/0, console_loop/1]).
+-behaviour(gen_server).
+
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
+        code_change/3]).
+
+-export([start_link/0]).
+-export([create/1, redraw/1, message/1]).
+
+-record(state, {
+        win = nil,
+        lines = [],
+        statline = [],
+        height = 0,
+        width = 0}).
 
 %% ============================================================================
 %% Application API
 %% ============================================================================
 
+start_link() ->
+    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+
 create(Height) ->
-    ?MODULE ! {create, Height}.
+    gen_server:cast(?MODULE, {create, Height}).
 
 redraw(Reason) ->
-    ?MODULE ! {redraw, Reason}.
+    gen_server:cast(?MODULE, {redraw, Reason}).
 
-msg(Message) ->
-    ?MODULE ! {msg, Message}.
-
-exit(Reason) ->
-    ?MODULE ! {exit, Reason}.
+message(Message) ->
+    gen_server:cast(?MODULE, {message, Message}).
 
 %% ============================================================================
-%% Application Behavior
+%% gen_server Behaviour
 %% ============================================================================
 
-start() ->
-    true = register(?MODULE, 
-        spawn(?MODULE, console_loop, [#console_state{}])).
+init([]) ->
+    {ok, #state{}}.
 
-console_loop(Cons) ->
-    receive
-        {create, Height} ->
-            Win = create_console(Height),
-            {MaxX, _} = encurses:getmaxxy(),
-            encurses:refresh(Win),
-            console_loop(Cons#console_state{
-                    win = Win, height = Height, width = MaxX});
+handle_call(_, _, State) ->
+    {noreply, State}.
 
-        {redraw, _Reason} ->
-            encurses:delwin(Cons#console_state.win),
-            encurses:erase(Cons#console_state.win),
-            Win = create_console(Cons#console_state.height),
-            {MaxX, _} = encurses:getmaxxy(),
-            NewCons = Cons#console_state{width=MaxX, win=Win},
-            draw_console(NewCons),
-            draw_stats(NewCons),
-            encurses:refresh(NewCons#console_state.win),
-            console_loop(NewCons);
+handle_cast({create, Height}, State) ->
+    {noreply, do_create_console(State, Height)};
+handle_cast({redraw, _Reason}, State) ->
+    {noreply, do_redraw(State)};
+handle_cast({message, Message}, State) ->
+    {noreply, do_message(State, Message)};
+handle_cast(_, State) ->
+    {noreply, State}.
 
-        {msg, Text} ->
-            NextCons = Cons#console_state{
-                    lines = [Text | Cons#console_state.lines]},
-            draw_console(NextCons),
-            encurses:refresh(NextCons#console_state.win),
-            console_loop(NextCons);
+handle_info(_Info, State) ->
+    {noreply, State}.
 
-        {exit, _} -> 
-            ok;
+terminate(_Reason, _State) ->
+    ok.
 
-        _ -> 
-            console_loop(Cons)
-    end.
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.
+
+%% ============================================================================
+%% Internal Functions
+%% ============================================================================
+
+do_create_console(State, Height) ->
+    Win = create_console(Height),
+    {MaxX, _} = encurses:getmaxxy(),
+    encurses:refresh(Win),
+    State#state{ win=Win, height=Height, width=MaxX }.
+
+do_redraw(State) ->
+    encurses:delwin(State#state.win),
+    encurses:erase(State#state.win),
+    Win = create_console(State#state.height),
+    {MaxX, _} = encurses:getmaxxy(),
+    NewCons = State#state{ width=MaxX, win=Win },
+    draw_console(NewCons),
+    draw_stats(NewCons),
+    encurses:refresh(NewCons#state.win),
+    NewCons.
+
+do_message(State, Message) ->
+    NewCons = State#state{ lines = [Message | State#state.lines]},
+    draw_console(NewCons),
+    encurses:refresh(NewCons#state.win),
+    NewCons.
 
 %% ============================================================================
 %% Internal Functions
@@ -89,7 +114,7 @@ create_console(Height) ->
     encurses:mvwaddstr(Win, 3, 0, " Messages "),
     Win.
 
-draw_console(#console_state{lines = Lines,
+draw_console(#state{lines = Lines,
         win = Win, height = Height, width = Width} = Cons) ->
     clear_lines(Win, Height, Width),
     draw_lines(Win, Lines, Height),
@@ -108,10 +133,7 @@ clear_lines(Win, Height, Width) ->
     encurses:hline(Win, $\s, Width),
     clear_lines(Win, Height-1, Width).
     
-%% draw the stat line after clearing it with a baseline hline
-
-draw_stats(#console_state{
-        win = Win, height = _Height, width = Width} = _Cons) ->
+draw_stats(#state{win = Win, height = _Height, width = Width} = _Cons) ->
     case ru_char:char_exists() of
         true ->
             {ok, Stats} = ru_char:get_stat_line(),

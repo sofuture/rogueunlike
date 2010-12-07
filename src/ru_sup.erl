@@ -26,7 +26,9 @@ init([]) ->
         permanent, 2000, worker, [ru_mobs]},
     CharServer = {ru_char, {ru_char, start_link, []}, 
         permanent, 2000, worker, [ru_char]},
-    Children = [MobsServer, CharServer],
+    ConsServer = {ru_console, {ru_console, start_link, []},
+        permanent, 2000, worker, [ru_console]},
+    Children = [MobsServer, CharServer, ConsServer],
     RestartStrategy = {one_for_one, 0, 1},
     {ok, {RestartStrategy, Children}}.
 

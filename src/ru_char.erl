@@ -30,7 +30,7 @@
 %% ============================================================================
 
 start_link() ->
-    gen_server:start_link({local, ?MODULE}, ?MODULE, [#cstats{}], []).
+    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 get_stat_line() ->
     gen_server:call(?MODULE, get_stats).
@@ -54,8 +54,8 @@ char_exists() ->
 %% Application Behavior
 %% ============================================================================
 
-init(State) ->
-    {ok, State}.
+init([]) ->
+    {ok, #cstats{}}.
 
 handle_call(get_stats, _From, Char) ->
     {reply, {ok, stat_line(Char)}, Char};
