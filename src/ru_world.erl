@@ -293,6 +293,11 @@ grid(X, Y, I, J, Type) ->
     col(X, Y, J, Type) ++
     grid(X + 1, Y, I - 1, J, Type).
 
+room_with_door(X, Y, I, J, {DoorX, DoorY}) ->
+    [#world{loc={DoorX, DoorY}, stuff=[door]} | 
+        [World || World <- room(X, Y, I, J),
+            World#world.loc /= {DoorX, DoorY}]].
+
 room(X, Y, I, J) ->
     Corners = [
         #world{ loc = {X, Y}, stuff=[wall_ulcorner] },
@@ -354,13 +359,11 @@ has_left([Head|T]) ->
 reconcile_squares(Old, New) ->
     reconcile_squares(Old, New, []).
 
-reconcile_squares(Old, [], Acc) ->
-    Acc;
+reconcile_squares(_, [], Acc) -> Acc;
 reconcile_squares(Old, [Current | Tail], Acc) ->
     SameLoc = fun(Elem) ->
         Elem#world.loc =:= Current#world.loc
     end,
-
     case lists:filter(SameLoc, Old) of
         [] -> reconcile_squares(Old, Tail, [Current | Acc]);
         [Sq] ->
@@ -372,7 +375,6 @@ reconcile_squares(Old, [Current | Tail], Acc) ->
             CurRight = SqRight or has_right(Current#world.stuff),
             CurBottom = SqBottom or has_bottom(Current#world.stuff),
             CurLeft = SqLeft or has_left(Current#world.stuff),
-
             New = if
                 CurTop andalso CurRight andalso CurBottom andalso CurLeft ->
                     wall_cross;
@@ -402,15 +404,8 @@ reconcile_squares(Old, [Current | Tail], Acc) ->
 
                 true -> wall
             end,
-
             reconcile_squares(Old, Tail, [Current#world{stuff=[New]} | Acc])
     end.
-
-room_with_door(X, Y, I, J, {DoorX, DoorY}) ->
-    [#world{loc={DoorX, DoorY}, stuff=[door]} | 
-        [World || World <- room(X, Y, I, J),
-            World#world.loc /= {DoorX, DoorY}]
-    ].
 
 draw_pref(Thing) ->
     case Thing of
