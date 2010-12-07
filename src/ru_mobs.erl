@@ -53,13 +53,13 @@ handle_call({add, Mob}, _From, State) ->
     {reply, ok, [Mob|State]};
 handle_call({update, Mob}, _From, State) ->
     {reply, ok, update_mob(Mob, State)};
-handle_call(What, _From, State) ->
-    io:format(?PP(What)).
-
-handle_cast(Msg, State) ->
+handle_call(_, _, State) ->
     {noreply, State}.
 
-handle_info(Info, State) ->
+handle_cast(_Msg, State) ->
+    {noreply, State}.
+
+handle_info(_Info, State) ->
     {noreply, State}.
 
 terminate(_Reason, _State) ->

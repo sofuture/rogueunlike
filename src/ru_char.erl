@@ -16,90 +16,79 @@
 -include("encurses.hrl").
 -include("ru.hrl").
 
--export([exit/1, draw_stats/0, set_char/1, start/0, char_loop/1]).
--export([add_item/1, remove_item/1]).
--export([stat_line/1, attr_line/1]).
+-behaviour(gen_server).
+
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
+        code_change/3]).
+
+-export([start_link/0]).
+-export([set_char/1, add_item/1, remove_item/1, get_stat_line/0,
+        get_attr_line/0, char_exists/0]).
 
 %% ============================================================================
 %% Module API
 %% ============================================================================
 
-draw_stats() ->
-    ?MODULE ! {stats}.
+start_link() ->
+    gen_server:start_link({local, ?MODULE}, ?MODULE, [#cstats{}], []).
+
+get_stat_line() ->
+    gen_server:call(?MODULE, get_stats).
+
+get_attr_line() ->
+    gen_server:call(?MODULE, get_attrs).
 
 set_char(Char) ->
-    ?MODULE ! {char, Char}.
-
-exit(Reason) ->
-    ?MODULE ! {die, Reason}.
+    gen_server:call(?MODULE, {char, Char}).
 
 add_item(Item) ->
-    ?MODULE ! {add, self(), Item},
-    ?WAITFORRET.
+    gen_server:call(?MODULE, {add_item, Item}).
 
 remove_item(Item) ->
-    ?MODULE ! {remove, self(), Item},
-    ?WAITFORRET.
+    gen_server:call(?MODULE, {remove_item, Item}).
+
+char_exists() ->
+    gen_server:call(?MODULE, char_exists).
 
 %% ============================================================================
 %% Application Behavior
 %% ============================================================================
 
-start() ->
-    true = register(?MODULE,
-        spawn(?MODULE, char_loop, [#cstats{}])).
+init(State) ->
+    {ok, State}.
 
-char_loop(Char) ->
-    receive
-        {stats} ->
-            ru_console:char_stats(Char),
-            char_loop(Char);
+handle_call(get_stats, _From, Char) ->
+    {reply, {ok, stat_line(Char)}, Char};
+handle_call(get_attrs, _From, Char) ->
+    {reply, {ok, attr_line(Char)}, Char};
+handle_call({char, NewChar}, _From, _Char) ->
+    {reply, ok, NewChar};
+handle_call({add_item, Item}, _From, Char) ->
+    {NewChar, Ret} = do_add_item(Char, Item),
+    {reply, Ret, NewChar};
+handle_call({remove_item, Item}, _From, Char) ->
+    {NewChar, Ret} = do_remove_item(Char, Item),
+    {reply, Ret, NewChar};
+handle_call(char_exists, _From, Char) ->
+    {reply, Char#cstats.name =/= nil, Char};
+handle_call(_, _, Char) ->
+    {noreply, Char}.
 
-        {char, NewChar} ->
-            ru_console:char_stats(NewChar),
-            char_loop(NewChar);
+handle_cast(_, Char) ->
+    {noreply, Char}.
 
-        {add, Caller, Item} ->
-            {NewChar, Ret} = do_add_item(Char, Item),
-            Caller ! Ret,
-            char_loop(NewChar);
-        
-        {remove, Caller, Item} ->
-            {NewChar, Ret} = do_remove_item(Char, Item),
-            Caller ! Ret,
-            char_loop(NewChar);
+handle_info(_Info, Char) ->
+    {noreply, Char}.
 
-        {exit, _} -> 
-            ok;
+terminate(_Reason, _Char) ->
+    ok.
 
-        _ -> 
-            char_loop(Char)
-    end.
+code_change(_OldVsn, Char, _Extra) ->
+    {ok, Char}.
 
 %% ============================================================================
 %% Internal Functions
 %% ============================================================================
-
-attr_line(Char) ->
-    Att = Char#cstats.attributes,
-    Str = Att#cattributes.strength,
-    Dex = Att#cattributes.dexterity,
-    Con = Att#cattributes.constitution,
-    Int = Att#cattributes.intelligence,
-    Wis = Att#cattributes.wisdom,
-    Cha = Att#cattributes.charisma,
-    Format = "Str: ~p Dex: ~p Con: ~p Int: ~p Wis: ~p Cha: ~p",
-    io_lib:format(Format, [Str, Dex, Con, Int, Wis, Cha]).
-
-
-stat_line(Char) ->
-    Name = Char#cstats.name,
-    Race = Char#cstats.race,
-    Level = Char#cstats.level,
-    Hp = Char#cstats.hp,
-    HpMax = Char#cstats.hpmax,
-    Format = "~s the ~s (Lvl ~p) HP: ~p/~p",
-    io_lib:format(Format, [Name, Race, Level, Hp, HpMax]).
 
 do_add_item(Char, Item) ->
     {Char#cstats{ inventory = [Item | Char#cstats.inventory] }, ok}.
@@ -113,5 +102,24 @@ do_remove_item(Char, Item) ->
                     lists:filter(NotItem, Char#cstats.inventory) }, ok};
         _ -> {Char, notfound}
     end.
-            
+
+attr_line(Char) ->
+    Att = Char#cstats.attributes,
+    Str = Att#cattributes.strength,
+    Dex = Att#cattributes.dexterity,
+    Con = Att#cattributes.constitution,
+    Int = Att#cattributes.intelligence,
+    Wis = Att#cattributes.wisdom,
+    Cha = Att#cattributes.charisma,
+    Format = "Str: ~p Dex: ~p Con: ~p Int: ~p Wis: ~p Cha: ~p",
+    io_lib:format(Format, [Str, Dex, Con, Int, Wis, Cha]).
+
+stat_line(Char) ->
+    Name = Char#cstats.name,
+    Race = Char#cstats.race,
+    Level = Char#cstats.level,
+    Hp = Char#cstats.hp,
+    HpMax = Char#cstats.hpmax,
+    Format = "~s the ~s (Lvl ~p) HP: ~p/~p",
+    io_lib:format(Format, [Name, Race, Level, Hp, HpMax]).
 

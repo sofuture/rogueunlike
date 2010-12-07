@@ -44,11 +44,11 @@ go() ->
 
 die() ->
     ru_console:exit(die),
-    ru_char:exit(die),
     ru_input:exit(die),
     encurses:erase(),
     encurses:refresh(),
     encurses:endwin(),
+    application:stop(rogueunlike),
     halt().
 
 %% ============================================================================
@@ -122,14 +122,11 @@ init() ->
     ok.
 
 start_systems() ->
+    application:start(rogueunlike),
     ru_console:start(),
-    ru_char:start(),
     ru_input:start(),
     ru_world:start(),
     ru_state:start(),
-%    application:start(ru_mobs),
-    application:start(rogueunlike),
-    %ru_mobs:start(),
     start_self().
 
 start_self() ->

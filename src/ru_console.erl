@@ -16,7 +16,7 @@
 -include("encurses.hrl").
 -include("ru.hrl").
 
--export([create/1, char_stats/1, redraw/1, msg/1, exit/1]).
+-export([create/1, redraw/1, msg/1, exit/1]).
 -export([start/0, console_loop/1]).
 
 %% ============================================================================
@@ -25,9 +25,6 @@
 
 create(Height) ->
     ?MODULE ! {create, Height}.
-
-char_stats(Char) ->
-    ?MODULE ! {stats, Char}.
 
 redraw(Reason) ->
     ?MODULE ! {redraw, Reason}.
@@ -55,12 +52,6 @@ console_loop(Cons) ->
             console_loop(Cons#console_state{
                     win = Win, height = Height, width = MaxX});
 
-        {stats, Char} ->
-            draw_console(Cons),
-            draw_stats(Char, Cons),
-            encurses:refresh(Cons#console_state.win),
-            console_loop(Cons);
-
         {redraw, _Reason} ->
             encurses:delwin(Cons#console_state.win),
             encurses:erase(Cons#console_state.win),
@@ -68,7 +59,7 @@ console_loop(Cons) ->
             {MaxX, _} = encurses:getmaxxy(),
             NewCons = Cons#console_state{width=MaxX, win=Win},
             draw_console(NewCons),
-            ru_char:draw_stats(),            
+            draw_stats(NewCons),
             encurses:refresh(NewCons#console_state.win),
             console_loop(NewCons);
 
@@ -119,19 +110,20 @@ clear_lines(Win, Height, Width) ->
     
 %% draw the stat line after clearing it with a baseline hline
 
-draw_stats(Char, #console_state{
+draw_stats(#console_state{
         win = Win, height = _Height, width = Width} = _Cons) ->
-    case Char#cstats.name of
-        nil -> 
-            ok;
-        _ ->
+    case ru_char:char_exists() of
+        true ->
+            {ok, Stats} = ru_char:get_stat_line(),
+            {ok, Attrs} = ru_char:get_attr_line(),
             encurses:move(Win, 0, 0),
             encurses:hline(Win, $=, Width),
-            StatLine = io_lib:format(" ~s ", [ru_char:stat_line(Char)]),
+            StatLine = io_lib:format(" ~s ", [Stats]),
             encurses:mvwaddstr(Win, 2, 0, StatLine),
-            AttrLine = io_lib:format(" ~s ", [ru_char:attr_line(Char)]),
+            AttrLine = io_lib:format(" ~s ", [Attrs]),
             AttrLineLen = length(lists:flatten(AttrLine)),
             encurses:mvwaddstr(Win, (Width-(AttrLineLen+2)), 0, AttrLine),
-            ok
+            ok;
+        _ -> ok
     end.
 
