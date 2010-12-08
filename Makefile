@@ -10,6 +10,9 @@ test: force
 clean:
 	@./rebar clean
 
+clean-deps:
+	@rm -rf deps
+
 run: all
 	@./run.escript
 
