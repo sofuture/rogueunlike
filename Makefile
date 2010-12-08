@@ -1,6 +1,9 @@
 all:
 	@./rebar compile
 
+deps:
+	@./rebar get-deps
+
 test: force
 	@./rebar eunit
 

@@ -62,9 +62,7 @@ handle_cast({create, Height}, State) ->
 handle_cast({redraw, _Reason}, State) ->
     {noreply, do_redraw(State)};
 handle_cast({message, Message}, State) ->
-    {noreply, do_message(State, Message)};
-handle_cast(_, State) ->
-    {noreply, State}.
+    {noreply, do_message(State, Message)}.
 
 handle_info(_Info, State) ->
     {noreply, State}.

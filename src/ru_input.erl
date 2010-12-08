@@ -67,8 +67,6 @@ handle_cast({redraw, _Reason}, State) ->
 handle_cast({input, Input}, State) ->
     F = State#input.mode,
     F(Input, State),
-    {noreply, State};
-handle_cast(_, State) ->
     {noreply, State}.
 
 handle_info(_Info, State) ->

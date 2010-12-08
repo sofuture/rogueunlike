@@ -52,9 +52,7 @@ handle_call(tick, _From, State) ->
 handle_call({add, Mob}, _From, State) ->
     {reply, ok, [Mob|State]};
 handle_call({update, Mob}, _From, State) ->
-    {reply, ok, update_mob(Mob, State)};
-handle_call(_, _, State) ->
-    {noreply, State}.
+    {reply, ok, update_mob(Mob, State)}.
 
 handle_cast(_Msg, State) ->
     {noreply, State}.

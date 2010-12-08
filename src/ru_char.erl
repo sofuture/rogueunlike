@@ -70,9 +70,7 @@ handle_call({remove_item, Item}, _From, Char) ->
     {NewChar, Ret} = do_remove_item(Char, Item),
     {reply, Ret, NewChar};
 handle_call(char_exists, _From, Char) ->
-    {reply, Char#cstats.name =/= nil, Char};
-handle_call(_, _, Char) ->
-    {noreply, Char}.
+    {reply, Char#cstats.name =/= nil, Char}.
 
 handle_cast(_, Char) ->
     {noreply, Char}.

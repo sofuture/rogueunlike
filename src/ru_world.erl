@@ -18,36 +18,37 @@
 -include("encurses.hrl").
 -include("ru.hrl").
 
--export([start/0, world_loop/1, database_test/0, redraw/1, init/1]).
+-behaviour(gen_server).
 
--export([square_has/2, square_add/2, square_sub/2, get_square/1, 
-         save_square/1, hero_location/0, tick/0, mob_location/1]).
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
+        code_change/3]).
+
+-export([start_link/0]).
+-export([database_test/0, redraw/1, init/1, square_has/2, square_add/2,
+        square_sub/2, get_square/1, save_square/1, hero_location/0, tick/0,
+        mob_location/1]).
 
 %% ============================================================================
-%% Application API
+%% Module API
 %% ============================================================================
+
+start_link() ->
+    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 database_test() ->
-    ?MODULE ! {database_test, self()},
-    ?WAITFOROK.
+    gen_server:call(?MODULE, database_test).
 
-redraw(Reason) ->
-    ?MODULE ! {redraw, Reason}.
+redraw() ->
+    gen_server:call(?MODULE, {redraw, Reason}).
 
 hero_location() ->
-    ?MODULE ! {find_hero, self()},
-    ?WAITFORRET.
+    gen_server:cast(?MODULE, find_hero).
 
 mob_location(MobRef) ->
-    ?MODULE ! {find_mob, self(), MobRef},
-    ?WAITFORRET.
-
-init(ConsHeight) ->
-    ?MODULE ! {init, ConsHeight}.
+    gen_server:call(?MODULE, {find_mob, MobRef}).
 
 get_square(Location) ->
-    ?MODULE ! {get_square, self(), Location},
-    ?WAITFORRET.
+    gen_server:call(?MODULE, {get_square, Location}).
 
 tick() ->
     ok.
