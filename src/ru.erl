@@ -121,7 +121,6 @@ init() ->
 
 start_systems() ->
     application:start(rogueunlike),
-    ru_state:start(),
     start_self().
 
 start_self() ->

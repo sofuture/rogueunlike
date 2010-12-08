@@ -18,21 +18,21 @@
 -export([start_link/0]).
 -export([init/1]).
 
+-define(RUWORKER(Name),
+    {Name, {Name, start_link, []}, permanent, 2000, worker, [Name]}).
+
 start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 init([]) ->
-    MobsServer = {ru_mobs, {ru_mobs, start_link, []}, 
-        permanent, 2000, worker, [ru_mobs]},
-    CharServer = {ru_char, {ru_char, start_link, []}, 
-        permanent, 2000, worker, [ru_char]},
-    ConsServer = {ru_console, {ru_console, start_link, []},
-        permanent, 2000, worker, [ru_console]},
-    InputServer = {ru_input, {ru_input, start_link, []},
-        permanent, 2000, worker, [ru_input]},
-    WorldServer = {ru_world, {ru_world, start_link, []},
-        permanent, 2000, worker, [ru_world]},
-    Children = [MobsServer, CharServer, ConsServer, InputServer, WorldServer],
-    RestartStrategy = {one_for_one, 0, 1},
+    MobsServer = ?RUWORKER(ru_mobs),
+    CharServer = ?RUWORKER(ru_char),
+    ConsoleServer = ?RUWORKER(ru_console),
+    InputServer = ?RUWORKER(ru_input),
+    WorldServer = ?RUWORKER(ru_world),
+    StateServer = ?RUWORKER(ru_state),
+    Children = [MobsServer, CharServer, ConsoleServer, 
+        InputServer, WorldServer, StateServer],
+    RestartStrategy = {one_for_one, 2, 10},
     {ok, {RestartStrategy, Children}}.
 

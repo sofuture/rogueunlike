@@ -15,84 +15,72 @@
 
 -include("ru.hrl").
 
--export([start/0, state_loop/1]).
+-behaviour(gen_server).
+
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
+        code_change/3]).
+
+-export([start_link/0]).
 -export([move/2, open_door/1, close_door/1, add_mob/3, add_hero/1, attack/2]).
 
 %% ============================================================================
 %% Module API
 %% ============================================================================
 
+start_link() ->
+    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+
 add_mob(Type, Location, Func) ->
-    ?MODULE ! {add, self(), Type, Location, Func},
-    ?WAITFOROK.
+    gen_server:call(?MODULE, {add, Type, Location, Func}).
 
 add_hero(Location) ->
-    ?MODULE ! {add, self(), hero, Location},
-    ?WAITFOROK.
+    gen_server:call(?MODULE, {add, hero, Location}).
 
-move(Ref, Direction) when is_reference(Ref) ->
-    ?MODULE ! {move, self(), Ref, Direction},
-    ?WAITFOROK;
-move(hero, Direction) ->
-    ?MODULE ! {move, self(), hero, Direction},
-    ?WAITFOROK.
+move(Who, Direction) ->
+    gen_server:call(?MODULE, {move, Who, Direction}).
 
 open_door(Direction) ->
-    ?MODULE ! {open_door, self(), Direction},
-    ?WAITFORRET.
+    gen_server:call(?MODULE, {open_door, Direction}).
 
 close_door(Direction) ->
-    ?MODULE ! {close_door, self(), Direction},
-    ?WAITFORRET.
+    gen_server:call(?MODULE, {close_door, Direction}).
 
-attack(WhoRef, Direction) ->
-    ?MODULE ! {attack, self(), WhoRef, Direction},
-    ?WAITFORRET.
+attack(Who, Direction) ->
+    gen_server:call(?MODULE, {attack, Who, Direction}).
 
 %% ============================================================================
 %% Application Behavior
 %% ============================================================================
 
-start() ->
-    true = register(?MODULE,
-        spawn(?MODULE, state_loop, [[]])).
+init(State) ->
+    {ok, State}.
 
-state_loop(State) ->
-    receive
-        {add, Caller, hero, Location} ->
-            Caller ! do_add_hero(Location),
-            state_loop(State);
+handle_call({add, hero, Location}, _From, State) ->
+    {reply, do_add_hero(Location), State};
+handle_call({add, Type, Location, Func}, _From, State) ->
+    {reply, do_add_mob(Type, Location, Func), State};
+handle_call({move, hero, Direction}, _From, State) ->
+    {reply, do_move(hero, Direction), State};
+handle_call({move, WhoRef, Direction}, _From, State) ->
+    {reply, do_move(WhoRef, Direction), State};
+handle_call({open_door, Direction}, _From, State) ->
+    {reply, do_open_door(Direction), State};
+handle_call({close_door, Direction}, _From, State) ->
+    {reply, do_close_door(Direction), State};
+handle_call({attack, WhoRef, Direction}, _From, State) ->
+    {reply, do_attack(WhoRef, Direction), State}.
 
-        {add, Caller, Type, Location, Func} ->
-            Caller ! do_add_mob(Type, Location, Func),
-            state_loop(State);
+handle_cast(_Msg, State) ->
+    {noreply, State}.
 
-        {move, Caller, hero, Direction} ->
-            Caller ! do_move(hero, Direction),
-            state_loop(State);
+handle_info(_Info, State) ->
+    {noreply, State}.
 
-        {move, Caller, Ref, Direction} ->
-            Caller ! do_move(Ref, Direction),
-            state_loop(State);
+terminate(_Reason, _State) ->
+    ok.
 
-        {open_door, Caller, Direction} ->
-            Caller ! do_open_door(Direction),
-            state_loop(State);
-        
-        {close_door, Caller, Direction} ->
-            Caller ! do_close_door(Direction),
-            state_loop(State);
-
-        {attack, Caller, WhoRef, Direction} ->
-            Caller ! do_attack(WhoRef, Direction),
-            state_loop(State);
-
-        {exit, _} -> 
-            ok;
-
-        _ -> 
-            state_loop(State)
-    end.
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.
 
 %% ============================================================================
 %% Internal Functions
@@ -179,7 +167,7 @@ do_open_door(Direction) ->
                     nodoor
             end,
             ru:redraw(move),
-            {ok, Ret}
+            Ret
     end.
 
 do_close_door(Direction) ->
@@ -197,7 +185,7 @@ do_close_door(Direction) ->
                     nodoor
             end,
             ru:redraw(move),
-            {ok, Ret}
+            Ret
     end.
 
 do_attack(hero, Direction) ->
@@ -224,5 +212,5 @@ do_rest_of_attack(Who, Current, Direction) ->
                     nomob
             end,
             ru:redraw(attack),
-            {ok, Ret}
+            Ret
     end.
