@@ -45,7 +45,7 @@ redraw(Reason) ->
     gen_server:call(?MODULE, {redraw, Reason}).
 
 hero_location() ->
-    gen_server:cast(?MODULE, find_hero).
+    gen_server:call(?MODULE, find_hero).
 
 mob_location(MobRef) ->
     gen_server:call(?MODULE, {find_mob, MobRef}).
