@@ -43,7 +43,6 @@ go() ->
     main_loop(#state{}).
 
 die() ->
-    ru_input:exit(die),
     encurses:erase(),
     encurses:refresh(),
     encurses:endwin(),
@@ -122,7 +121,6 @@ init() ->
 
 start_systems() ->
     application:start(rogueunlike),
-    ru_input:start(),
     ru_world:start(),
     ru_state:start(),
     start_self().

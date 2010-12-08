@@ -16,12 +16,19 @@
 -include("encurses.hrl").
 -include("ru.hrl").
 
--export([start/0,exit/1]).
--export([set_mode/1, key_loop/0, redraw/1, input/1]).
+-behaviour(gen_server).
+
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
+        code_change/3]).
+
+-export([start_link/0]).
+-export([set_mode/1, redraw/1, input/1]).
+
 -export([script_mode/2, game_mode/2]).
--export([recv_loop/2]).
+-export([key_loop/0]).
 
 -record(input, {
+        mode = nil,
         flags = [],
         buffer = []}).
 
@@ -29,47 +36,53 @@
 %% Module API
 %% ============================================================================
 
+start_link() ->
+    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+
 set_mode(Mode) ->
-    ?MODULE ! {mode, Mode}.
+    gen_server:cast(?MODULE, {mode, Mode}).
 
 redraw(Reason) ->
-    ?MODULE ! {redraw, Reason}.
+    gen_server:cast(?MODULE, {redraw, Reason}).
 
 input(Input) ->
-    ?MODULE ! {input, Input}.
+    gen_server:cast(?MODULE, {input, Input}).
 
-exit(Reason) ->
-    ?MODULE ! {exit, Reason}.
+%% ============================================================================
+%% gen_server Behaviour
+%% ============================================================================
+
+init([]) ->
+    true = register(keyreader,
+        spawn(?MODULE, key_loop, [])),
+    {ok, #input{ mode=fun(_,_) -> ok end }}.
+
+handle_call(_, _, State) ->
+    {noreply, State}.
+
+handle_cast({mode, Mode}, State) ->
+    {noreply, State#input{ mode=Mode }};
+handle_cast({redraw, _Reason}, State) ->
+    {noreply, State};
+handle_cast({input, Input}, State) ->
+    F = State#input.mode,
+    F(Input, State),
+    {noreply, State};
+handle_cast(_, State) ->
+    {noreply, State}.
+
+handle_info(_Info, State) ->
+    {noreply, State}.
+
+terminate(_Reason, _State) ->
+    ok.
+
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.
 
 %% ============================================================================
 %% Internal Functions
 %% ============================================================================
-
-start() ->
-    true = register(keyreader,
-        spawn(?MODULE, key_loop, [])),
-    true = register(?MODULE,
-        spawn(?MODULE, recv_loop, [fun(_,_) -> ok end, #input{}])).
-
-recv_loop(Mode, State) ->
-    receive
-        {exit, _} -> 
-            ok;
-
-        {mode, NewMode} ->
-            %% TODO maybe default clear state here?
-            recv_loop(NewMode, State);
-
-        {input, Input} ->
-            Mode(Input, State),
-            recv_loop(Mode, State);
-
-        {redraw, _Reason} ->
-            recv_loop(Mode, State);
-            
-        _ -> 
-            recv_loop(Mode, State)
-    end.
 
 key_loop() ->
     encurses:noecho(),
