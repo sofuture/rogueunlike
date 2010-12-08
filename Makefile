@@ -7,6 +7,8 @@ deps:
 test: force
 	@./rebar eunit
 
+clean-all: clean clean-deps
+
 clean:
 	@./rebar clean
 

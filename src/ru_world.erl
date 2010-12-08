@@ -14,8 +14,7 @@
 -author("Jeff Zellner <jeff.zellner@gmail.com>").
 
 -include_lib("stdlib/include/qlc.hrl").
-
--include("encurses.hrl").
+-include_lib("deps/encurses/include/encurses.hrl").
 -include("ru.hrl").
 
 -behaviour(gen_server).

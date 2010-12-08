@@ -13,7 +13,6 @@
 
 -author("Jeff Zellner <jeff.zellner@gmail.com>").
 
--include("encurses.hrl").
 -include("ru.hrl").
 
 -export([start/0, state_loop/1]).

@@ -13,7 +13,7 @@
 
 -author("Jeff Zellner <jeff.zellner@gmail.com>").
 
--include("encurses.hrl").
+-include_lib("deps/encurses/include/encurses.hrl").
 -include("ru.hrl").
 
 -export([go/0, die/0]).
