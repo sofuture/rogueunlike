@@ -30,7 +30,9 @@ init([]) ->
         permanent, 2000, worker, [ru_console]},
     InputServer = {ru_input, {ru_input, start_link, []},
         permanent, 2000, worker, [ru_input]},
-    Children = [MobsServer, CharServer, ConsServer, InputServer],
+    WorldServer = {ru_world, {ru_world, start_link, []},
+        permanent, 2000, worker, [ru_world]},
+    Children = [MobsServer, CharServer, ConsServer, InputServer, WorldServer],
     RestartStrategy = {one_for_one, 0, 1},
     {ok, {RestartStrategy, Children}}.
 

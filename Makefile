@@ -1,4 +1,4 @@
-all:
+all: deps
 	@./rebar compile
 
 deps:

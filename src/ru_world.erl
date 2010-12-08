@@ -24,7 +24,7 @@
         code_change/3]).
 
 -export([start_link/0]).
--export([database_test/0, redraw/1, init/1, square_has/2, square_add/2,
+-export([database_test/0, redraw/1, init_world/1, square_has/2, square_add/2,
         square_sub/2, get_square/1, save_square/1, hero_location/0, tick/0,
         mob_location/1]).
 
@@ -35,10 +35,13 @@
 start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
+init_world(ConsHeight) ->
+    gen_server:cast(?MODULE, {init, ConsHeight}).
+
 database_test() ->
     gen_server:call(?MODULE, database_test).
 
-redraw() ->
+redraw(Reason) ->
     gen_server:call(?MODULE, {redraw, Reason}).
 
 hero_location() ->
@@ -54,53 +57,45 @@ tick() ->
     ok.
 
 %% ============================================================================
-%% Application Behavior
+%% gen_server Behaviour
 %% ============================================================================
 
-start() ->
-    true = register(?MODULE,
-        spawn(?MODULE, world_loop, [#world_state{}])).
+init([]) ->
+    {ok, #world_state{}}.
 
-world_loop(State) ->
-    receive
-        {init, ConsHeight} -> 
-            init_db(),
-            {MaxX, MaxY} = encurses:getmaxxy(),
-            WinHeight = MaxY - (ConsHeight + 1),
-            Win = create_window(WinHeight, MaxX),
-            world_loop(State#world_state{
-                win = Win, height = WinHeight, width = MaxX});
+handle_call(database_test, _From, State) ->
+    create_test_world(),
+    {reply, ok, State};
+handle_call(find_hero, _From, State) ->
+    {reply, find_hero(), State};
+handle_call({find_mob, MobRef}, _From, State) ->
+    {reply, find_mob(MobRef), State};
+handle_call({redraw, _Reason}, _From, State) ->
+    Win = State#world_state.win,
+    encurses:erase(Win),
+    draw_world(Win),
+    {reply, ok, State};
+handle_call({get_square, Location}, _From, State) ->
+    {reply, get_world_square(Location), State}.
 
-        {database_test, Caller} ->
-            create_test_world(),
-            Caller ! ok,
-            world_loop(State);
+handle_cast({init, ConsHeight}, State) ->
+    init_db(),
+    {MaxX, MaxY} = encurses:getmaxxy(),
+    WinHeight = MaxY - (ConsHeight + 1),
+    Win = create_window(WinHeight, MaxX),
+    {noreply, State#world_state{
+        win = Win, height = WinHeight, width = MaxX}}.
 
-        {find_hero, Caller} ->
-            Caller ! {ok, find_hero()},
-            world_loop(State);
+handle_info(_Info, State) ->
+    {noreply, State}.
 
-        {find_mob, Caller, MobRef} ->
-            Caller ! {ok, find_mob(MobRef)},
-            world_loop(State);
+terminate(_Reason, _State) ->
+    ok.
 
-        {redraw, _Reason} ->
-            Win = State#world_state.win,
-            encurses:erase(Win),
-            draw_world(Win),
-            world_loop(State);
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.
 
-        {get_square, Caller, Location} ->
-            Caller ! {ok, get_world_square(Location)},
-            world_loop(State);
-
-        {exit, _} ->
-            ok;
-
-        _ ->
-            world_loop(State)
-    end.
-
+    
 %% ============================================================================
 %% Internal Functions
 %% ============================================================================

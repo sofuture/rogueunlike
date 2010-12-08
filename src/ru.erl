@@ -34,7 +34,7 @@ go() ->
     ru_console:create(ConsoleHeight),
     ?MSG("Press q to quit!"),
     ru_input:set_mode({ru_input, game_mode}),
-    ru_world:init(ConsoleHeight),
+    ru_world:init_world(ConsoleHeight),
     ru_world:database_test(),
     ru_state:add_hero({1,1}),
     make_dog(),
@@ -121,7 +121,6 @@ init() ->
 
 start_systems() ->
     application:start(rogueunlike),
-    ru_world:start(),
     ru_state:start(),
     start_self().
 
