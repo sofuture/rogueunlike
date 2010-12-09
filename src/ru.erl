@@ -26,6 +26,8 @@
 
 -record(state, {turn=0}).
 
+-define(DIENAME, never_die).
+
 %% ============================================================================
 %% Module API
 %% ============================================================================
@@ -33,8 +35,12 @@
 start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
-stop(Reason) ->
-    gen_server:cast(?MODULE, {stop, Reason}).
+stop(_Reason) ->
+    encurses:erase(),
+    encurses:refresh(),
+    encurses:endwin(),
+    ?DIENAME ! die,
+    application:stop(rogueunlike).
 
 tick() ->
     gen_server:call(?MODULE, tick).
@@ -44,8 +50,8 @@ redraw(Reason) ->
 
 start() ->
     gen_server:call(?MODULE, start),
-    register(never_die, self()),
-    never_die().
+    register(?DIENAME, self()),
+    wait_to_die().
 
 go() ->
     init_curses(),
@@ -56,17 +62,36 @@ go() ->
 %% gen_server Behavior
 %% ============================================================================
 
-never_die() ->
-    receive
-        die -> ok
-    after 1000 ->
-            never_die()
-    end.
-
 init(_) ->
     {ok, #state{}}.
 
 handle_call(start, _From, State) ->
+    {reply, do_start_stuff(), State};
+handle_call(tick, _From, State) ->
+    {reply, ok, do_tick(State)}.
+
+handle_cast({redraw, Reason}, State) ->
+    do_redraw(Reason),
+    {noreply, State}.
+
+handle_info(_Info, State) ->
+    {noreply, State}.
+
+terminate(_Reason, _State) ->
+    never_die ! die,
+    ok.
+
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.
+
+%% ============================================================================
+%% Internal Functions
+%% ============================================================================
+
+wait_to_die() ->
+    receive die -> ok end.
+
+do_start_stuff() ->
     make_hero(),
     ConsoleHeight = 6,
     ru_console:create(ConsoleHeight),
@@ -78,33 +103,7 @@ handle_call(start, _From, State) ->
     make_dog(),
     make_zombie(),
     ru_world:redraw(init),
-    {reply, ok, State};
-handle_call(tick, _From, State) ->
-    {reply, ok, do_tick(State)}.
-
-handle_cast({redraw, Reason}, State) ->
-    do_redraw(Reason),
-    {noreply, State};
-handle_cast({stop, _Reason}, State) ->
-    application:stop(rogueunlike),
-    {noreply, State}.
-
-handle_info(_Info, State) ->
-    {noreply, State}.
-
-terminate(_Reason, _State) ->
-    encurses:erase(),
-    encurses:refresh(),
-    encurses:endwin(),
-    never_die ! die,
     ok.
-
-code_change(_OldVsn, State, _Extra) ->
-    {ok, State}.
-
-%% ============================================================================
-%% Internal Functions
-%% ============================================================================
 
 do_tick(State) ->
     ?MSG(io_lib:format("Turn ~p", [State#state.turn+1])),
