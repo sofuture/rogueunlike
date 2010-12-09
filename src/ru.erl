@@ -16,8 +16,13 @@
 -include_lib("deps/encurses/include/encurses.hrl").
 -include("ru.hrl").
 
--export([go/0, die/0]).
--export([resize_loop/0, exit/1, redraw/1, tick/0]).
+-behaviour(gen_server).
+
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
+        code_change/3]).
+
+-export([start_link/0]).
+-export([start/0, stop/1, redraw/1, tick/0, go/0]).
 
 -record(state, {turn=0}).
 
@@ -25,10 +30,43 @@
 %% Module API
 %% ============================================================================
 
+start_link() ->
+    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+
+stop(Reason) ->
+    gen_server:cast(?MODULE, {stop, Reason}).
+
+tick() ->
+    gen_server:call(?MODULE, tick).
+
+redraw(Reason) ->
+    gen_server:cast(?MODULE, {redraw, Reason}).
+
+start() ->
+    gen_server:call(?MODULE, start),
+    register(never_die, self()),
+    never_die().
+
 go() ->
-    init(),
+    init_curses(),
     splash_screen(),
-    start_systems(),
+    application:start(rogueunlike).
+
+%% ============================================================================
+%% gen_server Behavior
+%% ============================================================================
+
+never_die() ->
+    receive
+        die -> ok
+    after 1000 ->
+            never_die()
+    end.
+
+init(_) ->
+    {ok, #state{}}.
+
+handle_call(start, _From, State) ->
     make_hero(),
     ConsoleHeight = 6,
     ru_console:create(ConsoleHeight),
@@ -40,18 +78,44 @@ go() ->
     make_dog(),
     make_zombie(),
     ru_world:redraw(init),
-    main_loop(#state{}).
+    {reply, ok, State};
+handle_call(tick, _From, State) ->
+    {reply, ok, do_tick(State)}.
 
-die() ->
+handle_cast({redraw, Reason}, State) ->
+    do_redraw(Reason),
+    {noreply, State};
+handle_cast({stop, _Reason}, State) ->
+    application:stop(rogueunlike),
+    {noreply, State}.
+
+handle_info(_Info, State) ->
+    {noreply, State}.
+
+terminate(_Reason, _State) ->
     encurses:erase(),
     encurses:refresh(),
     encurses:endwin(),
-    application:stop(rogueunlike),
-    halt().
+    never_die ! die,
+    ok.
+
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.
 
 %% ============================================================================
 %% Internal Functions
 %% ============================================================================
+
+do_tick(State) ->
+    ?MSG(io_lib:format("Turn ~p", [State#state.turn+1])),
+    ru_mobs:tick(),
+    ru_world:tick(),
+    State#state{ turn=State#state.turn + 1}.
+
+do_redraw(Reason) ->
+    ru_world:redraw(Reason),
+    ru_console:redraw(Reason),
+    ok.
 
 make_hero() ->
     Char = #cstats{ 
@@ -77,35 +141,6 @@ make_dog() ->
 make_zombie() ->
     ru_state:add_mob(zombie, {19,5}, fun ru_brains:zombie_brain/2).
 
-main_loop(State) ->
-    receive
-        {tick, _} ->
-            ?MSG(io_lib:format("Turn ~p", [State#state.turn+1])),
-            ru_mobs:tick(),
-            ru_world:tick(),
-            main_loop(State#state{ turn=State#state.turn + 1});
-
-        {redraw, Reason} ->
-            ru_world:redraw(Reason),
-            ru_console:redraw(Reason),
-            main_loop(State);
-
-        {exit, _} ->
-            die();
-
-        _ -> 
-            main_loop(State)
-    end.
-
-tick() ->
-    ?MODULE ! {tick, tock}.
-
-redraw(Reason) ->
-    ?MODULE ! {redraw, Reason}.
-
-exit(Reason) ->
-    ?MODULE ! {exit, Reason}.
-
 % listen for SIGWINCH at window resize
 
 resize_loop() ->
@@ -113,19 +148,10 @@ resize_loop() ->
     redraw(sigwinch),
     resize_loop().
 
-init() ->
+init_curses() ->
     encurses:initscr(),
     encurses:keypad(0, true),
     encurses:noecho(),
-    ok.
-
-start_systems() ->
-    application:start(rogueunlike),
-    start_self().
-
-start_self() ->
-    %spawn(?MODULE, resize_loop, []),
-    true = register(?MODULE, self()),
     ok.
 
 spiral(X,Y, DX, DY, MinX, MinY, MaxX, MaxY, Acc) ->

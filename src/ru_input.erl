@@ -134,7 +134,7 @@ parse_direction(Char) ->
 
 script_mode(Input, _State) ->
     case Input of
-        $q -> ru:exit("Got exit message");
+        $q -> ru:stop("Got exit message");
         _ -> script ! {dosomething, nil}
     end.
 
@@ -184,7 +184,7 @@ game_mode(Input, _State) ->
     DirInput = parse_direction(Input),
     case DirInput of
         Key when Key =:= $q orelse Key =:= $Q ->
-            ru:exit("Got exit message");
+            ru:stop("Got exit message");
 
         Dir when ?ISDIR(Dir) ->
             case Dir of

@@ -25,13 +25,14 @@ start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 init([]) ->
+    MainServer = ?RUWORKER(ru),
     MobsServer = ?RUWORKER(ru_mobs),
     CharServer = ?RUWORKER(ru_char),
     ConsoleServer = ?RUWORKER(ru_console),
     InputServer = ?RUWORKER(ru_input),
     WorldServer = ?RUWORKER(ru_world),
     StateServer = ?RUWORKER(ru_state),
-    Children = [MobsServer, CharServer, ConsoleServer, 
+    Children = [MainServer, MobsServer, CharServer, ConsoleServer, 
         InputServer, WorldServer, StateServer],
     RestartStrategy = {one_for_one, 2, 10},
     {ok, {RestartStrategy, Children}}.
