@@ -102,7 +102,7 @@ do_start_stuff() ->
     ru_state:add_hero({1,1}),
     make_dog(),
     make_zombie(),
-    ru_world:redraw(init),
+    do_redraw(init),
     ok.
 
 do_tick(State) ->
