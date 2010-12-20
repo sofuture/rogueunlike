@@ -32,8 +32,9 @@ init([]) ->
     InputServer = ?RUWORKER(ru_input),
     WorldServer = ?RUWORKER(ru_world),
     StateServer = ?RUWORKER(ru_state),
+    DrawServer = ?RUWORKER(ru_draw),
     Children = [MainServer, MobsServer, CharServer, ConsoleServer, 
-        InputServer, WorldServer, StateServer],
+        InputServer, WorldServer, StateServer, DrawServer],
     RestartStrategy = {one_for_one, 2, 10},
     {ok, {RestartStrategy, Children}}.
 
