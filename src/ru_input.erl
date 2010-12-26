@@ -38,6 +38,7 @@
 start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
+
 set_mode(Mode) ->
     gen_server:cast(?MODULE, {mode, Mode}).
 

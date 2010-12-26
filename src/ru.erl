@@ -36,9 +36,7 @@ start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 stop(_Reason) ->
-    encurses:erase(),
-    encurses:refresh(),
-    encurses:endwin(),
+    ru_draw:cleanup(),
     ?DIENAME ! die,
     application:stop(rogueunlike).
 
@@ -54,9 +52,12 @@ start() ->
     wait_to_die().
 
 go() ->
-    init_curses(),
-    splash_screen(),
-    application:start(rogueunlike).
+    %encurses:initscr(),
+    %ncurses:keypad(0, true),
+    %encurses:noecho(),
+    %splash_screen(),
+    application:start(rogueunlike),
+    ru_draw:init().
 
 %% ============================================================================
 %% gen_server Behavior
@@ -112,6 +113,7 @@ do_tick(State) ->
     State#state{ turn=State#state.turn + 1}.
 
 do_redraw(Reason) ->
+    ru_draw:draw(Reason),
     ru_world:redraw(Reason),
     ru_console:redraw(Reason),
     ok.
@@ -139,19 +141,6 @@ make_dog() ->
 
 make_zombie() ->
     ru_state:add_mob(zombie, {19,5}, fun ru_brains:zombie_brain/2).
-
-% listen for SIGWINCH at window resize
-
-resize_loop() ->
-    encurses:sigwinch(),
-    redraw(sigwinch),
-    resize_loop().
-
-init_curses() ->
-    encurses:initscr(),
-    encurses:keypad(0, true),
-    encurses:noecho(),
-    ok.
 
 spiral(X,Y, DX, DY, MinX, MinY, MaxX, MaxY, Acc) ->
     encurses:mvaddch(X,Y,?ACS_CKBOARD),

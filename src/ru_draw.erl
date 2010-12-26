@@ -23,7 +23,7 @@
         code_change/3]).
 
 -export([start_link/0]).
--export([draw/1]).
+-export([draw/1, cleanup/0, init/0]).
 
 -record(state, {worldwin, conswin}).
 
@@ -34,8 +34,14 @@
 start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
+init() ->
+    gen_server:call(?MODULE, init).
+
 draw(Reason) ->
     gen_server:call(?MODULE, {draw, Reason}).
+
+cleanup() ->
+    gen_server:call(?MODULE, cleanup).
 
 %% ============================================================================
 %% gen_server Behaviour
@@ -44,8 +50,12 @@ draw(Reason) ->
 init(_) ->
     {ok, #state{}}.
 
-handle_call({drawn, _Reason}, _From, State) ->
-    {reply, ok, do_draw(State)}.
+handle_call({draw, _Reason}, _From, State) ->
+    {reply, ok, do_draw(State)};
+handle_call(init, _From, State) ->
+    {reply, do_init(), State};
+handle_call(cleanup, _From, State) ->
+    {reply, do_cleanup(), State}.
 
 handle_cast({init, ConsHeight}, State) ->
     {noreply, State}.
@@ -62,13 +72,22 @@ code_change(_OldVsn, State, _Extra) ->
 %% ============================================================================
 %% Internal Functions
 %% ============================================================================
+    
+do_init() ->
+    encurses:initscr(),
+    encurses:keypad(0, true),
+    encurses:noecho(),
+    ok.
+
+do_cleanup() ->
+    encurses:erase(),
+    encurses:refresh(),
+    encurses:endwin(),
+    ok.
 
 do_draw(State) ->
-    State#state{ worldwin = draw_world(State#state.worldwin),
+    State#state{ %worldwin = draw_world(State#state.worldwin),
         conswin = draw_console(State#state.conswin) }.
-
-draw_console(Win) ->
-    ok.
 
 draw_world(Win) ->
     Q = qlc:q([X || X <- mnesia:table(world)]),
@@ -83,6 +102,9 @@ draw_world(Win) ->
     end,
     lists:foreach(DrawF, World),
     encurses:refresh(Win),
+    ok.
+
+draw_console(Win) ->
     ok.
 
 bounding_dimensions(World) ->
