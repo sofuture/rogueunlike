@@ -25,7 +25,7 @@
 -export([start_link/0]).
 -export([draw/1, cleanup/0, init/0]).
 
--record(state, {worldwin, conswin}).
+-record(state, {worldwini=nil, conswin=nil, consheight=6, conswidth=nil}).
 
 %% ============================================================================
 %% Module API
@@ -86,8 +86,65 @@ do_cleanup() ->
     ok.
 
 do_draw(State) ->
-    State#state{ %worldwin = draw_world(State#state.worldwin),
-        conswin = draw_console(State#state.conswin) }.
+    {MaxX, MaxY} = encurses:getmaxxy(),
+    ConsWin = State#state.conswin,
+    ConsHeight = State#state.consheight,
+    ConsWidth = State#state.conswidth,
+    State#state{ 
+        conswidth = MaxX,
+        conswin = draw_console(ConsWin, ConsHeight, MaxX, MaxY) }.
+
+draw_console(nil, Height, MaxX, MaxY) ->
+    Win = create_console(Height, MaxX, MaxY),
+    draw_console(Win, Height, MaxX),
+    draw_stats(Win, MaxX),
+    encurses:refresh(Win),
+    Win;
+draw_console(Win, Height, MaxX, MaxY) ->
+    encurses:delwin(Win),
+    encurses:erase(Win),
+    draw_console(nil, Height, MaxX, MaxY).
+
+create_console(Height, MaxX, MaxY) ->
+    encurses:curs_set(?CURS_INVISIBLE),
+    Win = encurses:newwin(MaxX, Height+1, 0, MaxY-(Height+1)),
+    encurses:border(Win, ?CONSOLE_BORDERS),
+    encurses:mvwaddstr(Win, 3, 0, " Messages "),
+    Win.
+
+draw_console(Win, Height, Width) ->
+    clear_lines(Win, Height, Width),
+    draw_lines(Win, ru_console:get_lines(), Height),
+    ok.
+
+draw_lines(_, [], _) -> ok;
+draw_lines(_, _, 0) -> ok;
+draw_lines(Win, Lines, Height) ->
+    [Last | Rest] = Lines,
+    encurses:mvwaddstr(Win, 0, Height, Last),
+    draw_lines(Win, Rest, Height - 1).
+
+clear_lines(_, 0, _) -> ok;
+clear_lines(Win, Height, Width) ->
+    encurses:move(Win, 0, Height),
+    encurses:hline(Win, $\s, Width),
+    clear_lines(Win, Height-1, Width).
+
+draw_stats(Win, Width) ->
+    case ru_char:char_exists() of
+        true ->
+            {ok, Stats} = ru_char:get_stat_line(),
+            {ok, Attrs} = ru_char:get_attr_line(),
+            encurses:move(Win, 0, 0),
+            encurses:hline(Win, $=, Width),
+            StatLine = io_lib:format(" ~s ", [Stats]),
+            encurses:mvwaddstr(Win, 2, 0, StatLine),
+            AttrLine = io_lib:format(" ~s ", [Attrs]),
+            AttrLineLen = length(lists:flatten(AttrLine)),
+            encurses:mvwaddstr(Win, (Width-(AttrLineLen+2)), 0, AttrLine),
+            ok;
+        _ -> ok
+    end.
 
 draw_world(Win) ->
     Q = qlc:q([X || X <- mnesia:table(world)]),
@@ -102,9 +159,6 @@ draw_world(Win) ->
     end,
     lists:foreach(DrawF, World),
     encurses:refresh(Win),
-    ok.
-
-draw_console(Win) ->
     ok.
 
 bounding_dimensions(World) ->
