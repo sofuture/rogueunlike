@@ -52,10 +52,6 @@ start() ->
     wait_to_die().
 
 go() ->
-    %encurses:initscr(),
-    %ncurses:keypad(0, true),
-    %encurses:noecho(),
-    %splash_screen(),
     application:start(rogueunlike),
     ru_draw:init().
 
@@ -94,11 +90,9 @@ wait_to_die() ->
 
 do_start_stuff() ->
     make_hero(),
-    ConsoleHeight = 6,
-    ru_console:create(ConsoleHeight),
     ?MSG("Press q to quit!"),
     ru_input:set_mode({ru_input, game_mode}),
-    ru_world:init_world(ConsoleHeight),
+    ru_world:init_world(6),
     ru_world:database_test(),
     ru_state:add_hero({1,1}),
     make_dog(),
@@ -114,8 +108,6 @@ do_tick(State) ->
 
 do_redraw(Reason) ->
     ru_draw:draw(Reason),
-    ru_world:redraw(Reason),
-    ru_console:redraw(Reason),
     ok.
 
 make_hero() ->
@@ -141,6 +133,10 @@ make_dog() ->
 
 make_zombie() ->
     ru_state:add_mob(zombie, {19,5}, fun ru_brains:zombie_brain/2).
+
+%% ============================================================================
+%% Splash screen stuff
+%% ============================================================================
 
 spiral(X,Y, DX, DY, MinX, MinY, MaxX, MaxY, Acc) ->
     encurses:mvaddch(X,Y,?ACS_CKBOARD),

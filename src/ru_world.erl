@@ -23,9 +23,9 @@
         code_change/3]).
 
 -export([start_link/0]).
--export([database_test/0, redraw/1, init_world/1, square_has/2, square_add/2,
+-export([database_test/0, init_world/1, square_has/2, square_add/2,
         square_sub/2, get_square/1, save_square/1, hero_location/0, tick/0,
-        mob_location/1]).
+        mob_location/1, get_squares/0]).
 
 %% ============================================================================
 %% Module API
@@ -40,9 +40,6 @@ init_world(ConsHeight) ->
 database_test() ->
     gen_server:call(?MODULE, database_test).
 
-redraw(Reason) ->
-    gen_server:call(?MODULE, {redraw, Reason}).
-
 hero_location() ->
     gen_server:call(?MODULE, find_hero).
 
@@ -51,6 +48,9 @@ mob_location(MobRef) ->
 
 get_square(Location) ->
     gen_server:call(?MODULE, {get_square, Location}).
+
+get_squares() ->
+    gen_server:call(?MODULE, get_squares).
 
 tick() ->
     ok.
@@ -69,21 +69,14 @@ handle_call(find_hero, _From, State) ->
     {reply, find_hero(), State};
 handle_call({find_mob, MobRef}, _From, State) ->
     {reply, find_mob(MobRef), State};
-handle_call({redraw, _Reason}, _From, State) ->
-    Win = State#world_state.win,
-    encurses:erase(Win),
-    draw_world(Win),
-    {reply, ok, State};
 handle_call({get_square, Location}, _From, State) ->
-    {reply, get_world_square(Location), State}.
+    {reply, get_world_square(Location), State};
+handle_call(get_squares, _From, State) ->
+    {reply, get_all_world_squares(), State}.
 
-handle_cast({init, ConsHeight}, State) ->
+handle_cast(_, State) ->
     init_db(),
-    {MaxX, MaxY} = encurses:getmaxxy(),
-    WinHeight = MaxY - (ConsHeight + 1),
-    Win = create_window(WinHeight, MaxX),
-    {noreply, State#world_state{
-        win = Win, height = WinHeight, width = MaxX}}.
+    {noreply, State}.
 
 handle_info(_Info, State) ->
     {noreply, State}.
@@ -99,26 +92,11 @@ code_change(_OldVsn, State, _Extra) ->
 %% Internal Functions
 %% ============================================================================
 
-create_window(Height, Width) ->
-    encurses:curs_set(?CURS_INVISIBLE),
-    Win = encurses:newwin(Width, Height, 0, 0),
-    encurses:refresh(Win),
-    Win.
-
-draw_world(Win) ->
+get_all_world_squares() ->
     Q = qlc:q([X || X <- mnesia:table(world)]),
     F = fun() -> qlc:eval(Q) end,
     {atomic, World} = mnesia:transaction(F),
-    {WorldWidth, WorldHeight} = bounding_dimensions(World),
-    {DrawX, DrawY} = ru_util:centering_coords(WorldWidth, WorldHeight),
-    DrawF = fun(Spot) ->
-        Char = square_char(Spot#world.stuff),
-        {LocX, LocY} = Spot#world.loc,
-        encurses:mvwaddch(Win, DrawX+LocX, DrawY+LocY, Char)
-    end,
-    lists:foreach(DrawF, World),
-    encurses:refresh(Win),
-    ok.
+    World.
 
 get_world_squares(Squares) when is_list(Squares) ->
     Exists = fun(Loc) ->
@@ -172,25 +150,6 @@ save_square(Square) ->
     Trans = fun() -> mnesia:write(Square) end,
     {atomic, _} = mnesia:transaction(Trans),
     Square.
-
-square_char(Stuff) ->
-    PriElement = fun(Elem) -> draw_pref(Elem) end,
-    PrefList = lists:map(PriElement, Stuff),
-    {_Prio, BestChar} = lists:min(PrefList), 
-    BestChar.
-
-bounding_dimensions(World) ->
-    FXs = fun(Elem) ->
-        {X, _} = Elem#world.loc,
-        X
-    end,
-    FYs = fun(Elem) ->
-        {_, Y} = Elem#world.loc,
-        Y
-    end,
-    MaxX = lists:max(lists:map(FXs, World)),
-    MaxY = lists:max(lists:map(FYs, World)),
-    {MaxX + 1, MaxY + 1}.
 
 square_has(Square, mob) ->
     FindMob = fun(Elem) -> is_record(Elem, mob) end,
@@ -399,71 +358,5 @@ reconcile_squares(Old, [Current | Tail], Acc) ->
                 true -> wall
             end,
             reconcile_squares(Old, Tail, [Current#world{stuff=[New]} | Acc])
-    end.
-
-draw_pref(Thing) ->
-    case Thing of
-        
-        %% mobs
-        hero ->
-            {0, $@};
-
-        #mob{} = MobRec ->
-            Type = MobRec#mob.type,
-            case Type of
-                dog ->
-                    {1, $d};
-                zombie ->
-                    {1, $Z};
-                _ ->
-                    {1, $?}
-            end;
-
-        %% stuff
-        fountain -> 
-            {1000, $U};
-        opendoor ->
-            {1001, $|};
-
-        %% infrastructureystuff
-        walkable -> 
-            {4000, $\s};
-        door ->
-            {5000, $+};
-
-        wall_ulcorner ->
-            {6000, ?ACS_ULCORNER};
-        wall_urcorner ->
-            {6000, ?ACS_URCORNER};
-        wall_llcorner ->
-            {6000, ?ACS_LLCORNER};
-        wall_lrcorner ->
-            {6000, ?ACS_LRCORNER};
-        
-        wall_cross -> 
-            {6000, ?ACS_PLUS};
-
-        wall_ttee ->
-            {6000, ?ACS_TTEE};
-        wall_btee ->
-            {6000, ?ACS_BTEE};
-        wall_ltee ->
-            {6000, ?ACS_LTEE};
-        wall_rtee ->
-            {6000, ?ACS_RTEE};
-
-        wall_hline ->
-            {6000, ?ACS_HLINE};
-        wall_vline ->
-            {6000, ?ACS_VLINE};
-
-        wall ->
-            {6001, $#};
-        wall_floating -> 
-            {6001, $#};
-
-        _ ->
-            {10000, $\s}
-
     end.
 

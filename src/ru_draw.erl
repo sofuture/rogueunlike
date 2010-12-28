@@ -25,7 +25,8 @@
 -export([start_link/0]).
 -export([draw/1, cleanup/0, init/0]).
 
--record(state, {worldwini=nil, conswin=nil, consheight=6, conswidth=nil}).
+-record(state, {worldwin=nil, worldheight=nil, worldwidth=nil,
+        conswin=nil, consheight=6, conswidth=nil}).
 
 %% ============================================================================
 %% Module API
@@ -57,7 +58,7 @@ handle_call(init, _From, State) ->
 handle_call(cleanup, _From, State) ->
     {reply, do_cleanup(), State}.
 
-handle_cast({init, ConsHeight}, State) ->
+handle_cast(_, State) ->
     {noreply, State}.
 
 handle_info(_Info, State) ->
@@ -87,12 +88,27 @@ do_cleanup() ->
 
 do_draw(State) ->
     {MaxX, MaxY} = encurses:getmaxxy(),
-    ConsWin = State#state.conswin,
-    ConsHeight = State#state.consheight,
-    ConsWidth = State#state.conswidth,
+    {ConsWin, ConsHeight} = {State#state.conswin, State#state.consheight},
+    {WorldWin, WorldHeight} = {State#state.worldwin, MaxY - ConsHeight},
     State#state{ 
         conswidth = MaxX,
+        worldwin = draw_world(WorldWin, WorldHeight, MaxX),
         conswin = draw_console(ConsWin, ConsHeight, MaxX, MaxY) }.
+
+draw_world(nil, Height, MaxX) ->
+    Win = create_world(Height, MaxX),
+    draw_world(Win, Height, MaxX);
+draw_world(Win, _Height, _MaxX) ->
+    encurses:erase(Win),
+    do_draw_world(Win),
+    encurses:refresh(Win),
+    Win.
+
+create_world(Height, MaxX) ->
+    encurses:curs_set(?CURS_INVISIBLE),
+    Win = encurses:newwin(MaxX, Height, 0, 0),
+    encurses:refresh(Win),
+    Win.
 
 draw_console(nil, Height, MaxX, MaxY) ->
     Win = create_console(Height, MaxX, MaxY),
@@ -146,10 +162,8 @@ draw_stats(Win, Width) ->
         _ -> ok
     end.
 
-draw_world(Win) ->
-    Q = qlc:q([X || X <- mnesia:table(world)]),
-    F = fun() -> qlc:eval(Q) end,
-    {atomic, World} = mnesia:transaction(F),
+do_draw_world(Win) ->
+    World = ru_world:get_squares(),
     {WorldWidth, WorldHeight} = bounding_dimensions(World),
     {DrawX, DrawY} = ru_util:centering_coords(WorldWidth, WorldHeight),
     DrawF = fun(Spot) ->
