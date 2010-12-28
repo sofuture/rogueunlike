@@ -319,7 +319,13 @@ do_splash_screen() ->
     spiral(0, 0, 1, 0, 0, 0, MX-1, MY-1, 0),
     encurses:refresh(),
     fade_in_title(" R O G U E U N L I K E "),
-    encurses:getch(),
+    Me = self(),
+    ru_input:set_mode(fun(_,_) -> Me ! ok end),
+    receive
+        ok -> ok
+    after 
+        2000 -> ok
+    end,
     encurses:erase(),
     encurses:refresh(),
     ok.
