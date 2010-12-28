@@ -31,22 +31,22 @@ start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 add_mob(Type, Location, Func) ->
-    gen_server:call(?MODULE, {add, Type, Location, Func}).
+    ?CALL({add, Type, Location, Func}).
 
 add_hero(Location) ->
-    gen_server:call(?MODULE, {add, hero, Location}).
+    ?CALL({add, hero, Location}).
 
 move(Who, Direction) ->
-    gen_server:call(?MODULE, {move, Who, Direction}).
+    ?CALL({move, Who, Direction}).
 
 open_door(Direction) ->
-    gen_server:call(?MODULE, {open_door, Direction}).
+    ?CALL({open_door, Direction}).
 
 close_door(Direction) ->
-    gen_server:call(?MODULE, {close_door, Direction}).
+    ?CALL({close_door, Direction}).
 
 attack(Who, Direction) ->
-    gen_server:call(?MODULE, {attack, Who, Direction}).
+    ?CALL({attack, Who, Direction}).
 
 %% ============================================================================
 %% Application Behavior

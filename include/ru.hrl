@@ -58,16 +58,12 @@
                   A =:= kp_se orelse 
                   A =:= kp_center).
 
--define(WAITFOROK, 
-    receive 
-        ok -> ok;
-        _ -> error
-    end).
+-define(CALL(A),
+    gen_server:call(?MODULE, A)).
 
--define(WAITFORRET,
-    receive
-        {ok, Thing} -> Thing;
-        _ -> nil
-    end).
+-define(CALL(A,B),
+    gen_server:call(?MODULE, A, B)).
         
+-define(CAST(A),
+    gen_server:cast(?MODULE, A)).
 

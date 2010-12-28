@@ -23,7 +23,7 @@
         code_change/3]).
 
 -export([start_link/0]).
--export([draw/1, cleanup/0, init/0]).
+-export([draw/1, cleanup/0, init/0, splash/0]).
 
 -record(state, {worldwin=nil, worldheight=nil, worldwidth=nil,
         conswin=nil, consheight=6, conswidth=nil}).
@@ -36,13 +36,16 @@ start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 init() ->
-    gen_server:call(?MODULE, init).
+    ?CALL(init).
+
+splash() ->
+    ?CALL(splash, infinity).
 
 draw(Reason) ->
-    gen_server:call(?MODULE, {draw, Reason}).
+    ?CALL({draw, Reason}).
 
 cleanup() ->
-    gen_server:call(?MODULE, cleanup).
+    ?CALL(cleanup).
 
 %% ============================================================================
 %% gen_server Behaviour
@@ -51,10 +54,12 @@ cleanup() ->
 init(_) ->
     {ok, #state{}}.
 
-handle_call({draw, _Reason}, _From, State) ->
-    {reply, ok, do_draw(State)};
 handle_call(init, _From, State) ->
     {reply, do_init(), State};
+handle_call(splash, _From, State) ->
+    {reply, do_splash_screen(), State};
+handle_call({draw, _Reason}, _From, State) ->
+    {reply, ok, do_draw(State)};
 handle_call(cleanup, _From, State) ->
     {reply, do_cleanup(), State}.
 
@@ -259,4 +264,63 @@ draw_pref(Thing) ->
             {10000, $\s}
 
     end.
+
+%% ============================================================================
+%% Splash screen stuff
+%% ============================================================================
+
+spiral(X,Y, DX, DY, MinX, MinY, MaxX, MaxY, Acc) ->
+    encurses:mvaddch(X,Y,?ACS_CKBOARD),
+    Acc1 = case Acc of
+        5 -> 
+            timer:sleep(1),
+            encurses:refresh(),
+            0;
+        _ -> Acc + 1
+    end,
+    if
+        X =:= MaxX andalso DX =:= 1 ->
+            spiral(X, Y+1, 0, 1, MinX, MinY, MaxX-1, MaxY, Acc1);
+        Y =:= MaxY andalso DY =:= 1 ->
+            spiral(X-1, Y, -1, 0, MinX, MinY, MaxX, MaxY-1, Acc1);
+        X =:= MinX andalso DX =:= -1 ->
+            spiral(X, Y-1, 0, -1, MinX+1, MinY, MaxX, MaxY, Acc1);
+        Y =:= MinY andalso DY =:= -1 ->
+            spiral(X+1, Y, 1, 0, MinX, MinY+1, MaxX, MaxY, Acc1);
+        Y > MaxY+1 orelse X > MaxX+1 orelse X < -2 orelse Y < -2 ->
+            ok;
+        true ->
+            spiral(X+DX, Y+DY, DX, DY, MinX, MinY, MaxX, MaxY, Acc1)
+    end.
+
+fade_in_title(Title) ->
+    {CX,CY} = ru_util:centering_coords(length(Title), 1),
+    MapChars = fun(Char, Acc) ->
+        [{length(Acc), Char} | Acc]
+    end,
+    Mapped = lists:foldl(MapChars, [], Title),
+    Draw = fun({X, Char}) ->
+        encurses:move(CX+X, CY-2),
+        encurses:vline($\s, 5),
+        encurses:mvaddch(CX+X, CY, Char),
+        encurses:refresh(),
+        timer:sleep(10)
+    end,
+    random:seed(now()),
+    Randomize = fun(_,_) ->
+        random:uniform(2) =:= 1
+    end,
+    lists:foreach(Draw, lists:sort(Randomize, Mapped)).
+
+do_splash_screen() ->
+    encurses:erase(),
+    encurses:curs_set(?CURS_INVISIBLE),
+    {MX,MY} = ru_util:get_window_dimensions(),
+    spiral(0, 0, 1, 0, 0, 0, MX-1, MY-1, 0),
+    encurses:refresh(),
+    fade_in_title(" R O G U E U N L I K E "),
+    encurses:getch(),
+    encurses:erase(),
+    encurses:refresh(),
+    ok.
 

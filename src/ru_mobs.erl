@@ -31,13 +31,13 @@ start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 tick() ->
-    gen_server:call(?MODULE, tick).
+    ?CALL(tick).
 
 add(Mob) when is_record(Mob, mob) ->
-    gen_server:call(?MODULE, {add, Mob}).
+    ?CALL({add, Mob}).
 
 update(#mob{} = Mob) ->
-    gen_server:call(?MODULE, {update, Mob}).
+    ?CALL({update, Mob}).
 
 %% ============================================================================
 %% gen_server Behaviour

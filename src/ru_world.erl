@@ -14,7 +14,6 @@
 -author("Jeff Zellner <jeff.zellner@gmail.com>").
 
 -include_lib("stdlib/include/qlc.hrl").
--include_lib("deps/encurses/include/encurses.hrl").
 -include("ru.hrl").
 
 -behaviour(gen_server).
@@ -35,22 +34,22 @@ start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 init_world(ConsHeight) ->
-    gen_server:cast(?MODULE, {init, ConsHeight}).
+    ?CAST({init, ConsHeight}).
 
 database_test() ->
-    gen_server:call(?MODULE, database_test).
+    ?CALL(database_test).
 
 hero_location() ->
-    gen_server:call(?MODULE, find_hero).
+    ?CALL(find_hero).
 
 mob_location(MobRef) ->
-    gen_server:call(?MODULE, {find_mob, MobRef}).
+    ?CALL({find_mob, MobRef}).
 
 get_square(Location) ->
-    gen_server:call(?MODULE, {get_square, Location}).
+    ?CALL({get_square, Location}).
 
 get_squares() ->
-    gen_server:call(?MODULE, get_squares).
+    ?CALL(get_squares).
 
 tick() ->
     ok.

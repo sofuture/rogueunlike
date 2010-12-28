@@ -13,7 +13,6 @@
 
 -author("Jeff Zellner <jeff.zellner@gmail.com>").
 
--include_lib("deps/encurses/include/encurses.hrl").
 -include("ru.hrl").
 
 -behaviour(gen_server).
@@ -39,10 +38,10 @@ start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 message(Message) ->
-    gen_server:cast(?MODULE, {message, Message}).
+    ?CAST({message, Message}).
 
 get_lines() ->
-    gen_server:call(?MODULE, get_lines).
+    ?CALL(get_lines).
 
 %% ============================================================================
 %% gen_server Behaviour
@@ -71,10 +70,7 @@ code_change(_OldVsn, State, _Extra) ->
 %% ============================================================================
 
 do_message(State, Message) ->
-    NewCons = State#state{ lines = [Message | State#state.lines]},
-    %draw_console(NewCons),
-    %encurses:refresh(NewCons#state.win),
-    NewCons.
+    State#state{ lines = [Message | State#state.lines]}.
 
 %% ============================================================================
 %% Internal Functions

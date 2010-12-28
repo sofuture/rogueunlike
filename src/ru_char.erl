@@ -32,22 +32,22 @@ start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 get_stat_line() ->
-    gen_server:call(?MODULE, get_stats).
+    ?CALL(get_stats).
 
 get_attr_line() ->
-    gen_server:call(?MODULE, get_attrs).
+    ?CALL(get_attrs).
 
 set_char(Char) ->
-    gen_server:call(?MODULE, {char, Char}).
+    ?CALL({char, Char}).
 
 add_item(Item) ->
-    gen_server:call(?MODULE, {add_item, Item}).
+    ?CALL({add_item, Item}).
 
 remove_item(Item) ->
-    gen_server:call(?MODULE, {remove_item, Item}).
+    ?CALL({remove_item, Item}).
 
 char_exists() ->
-    gen_server:call(?MODULE, char_exists).
+    ?CALL(char_exists).
 
 %% ============================================================================
 %% gen_server Behavior

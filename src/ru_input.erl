@@ -38,15 +38,14 @@
 start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
-
 set_mode(Mode) ->
-    gen_server:cast(?MODULE, {mode, Mode}).
+    ?CAST({mode, Mode}).
 
 redraw(Reason) ->
-    gen_server:cast(?MODULE, {redraw, Reason}).
+    ?CAST({redraw, Reason}).
 
 input(Input) ->
-    gen_server:cast(?MODULE, {input, Input}).
+    ?CAST({input, Input}).
 
 %% ============================================================================
 %% gen_server Behaviour
