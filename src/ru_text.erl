@@ -26,9 +26,7 @@ about_menu() ->
      "-----------------",
      "Rogueunlike is not exactly (but sort of) unlike a roguelike game.",
      "",
-     "It is/was/haswillbeen written by Jeff Zellner in a bunch of",
-     "Erlang code/scribbles. All rights belong to J.R. 'Bob' Dobbs",
-     "as well as Jeff Zellner and Aleister Crowley. Don't sue me. TIA.",
+     "All code hand assembled by Jeff Zellner.",
      "",
      "jeff.zellner\@gmail.com"].
 

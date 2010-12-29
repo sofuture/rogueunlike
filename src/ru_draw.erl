@@ -26,7 +26,7 @@
 -export([draw/1, cleanup/0, init/0, splash/0]).
 
 -record(state, {worldwin=nil, worldheight=nil, worldwidth=nil,
-        conswin=nil, consheight=6, conswidth=nil}).
+        conswin=nil, consheight=6, conswidth=nil, menuwin=nil }).
 
 %% ============================================================================
 %% Module API
@@ -63,6 +63,8 @@ handle_call({draw, _Reason}, _From, State) ->
 handle_call(cleanup, _From, State) ->
     {reply, do_cleanup(), State}.
 
+handle_cast({draw, _Reason}, State) ->
+    {noreply, do_draw(State)};
 handle_cast(_, State) ->
     {noreply, State}.
 
@@ -95,10 +97,13 @@ do_draw(State) ->
     {MaxX, MaxY} = encurses:getmaxxy(),
     {ConsWin, ConsHeight} = {State#state.conswin, State#state.consheight},
     {WorldWin, WorldHeight} = {State#state.worldwin, MaxY - ConsHeight},
+    MenuWin = State#state.menuwin,
     State#state{ 
         conswidth = MaxX,
         worldwin = draw_world(WorldWin, WorldHeight, MaxX),
-        conswin = draw_console(ConsWin, ConsHeight, MaxX, MaxY) }.
+        conswin = draw_console(ConsWin, ConsHeight, MaxX, MaxY),
+        menuwin = draw_menu(MenuWin)
+    }.
 
 draw_world(nil, Height, MaxX) ->
     Win = create_world(Height, MaxX),
@@ -109,22 +114,57 @@ draw_world(Win, _Height, _MaxX) ->
     encurses:refresh(Win),
     Win.
 
+draw_console(nil, Height, MaxX, MaxY) ->
+    Win = create_console(Height, MaxX, MaxY),
+    draw_console(Win, Height, MaxX, MaxY);
+draw_console(Win, Height, MaxX, _MaxY) ->
+    encurses:erase(Win),
+    draw_console(Win, Height, MaxX),
+    draw_stats(Win, MaxX),
+    encurses:refresh(Win),
+    Win.
+
+draw_menu(Win) ->
+    case ru_menu:has_menu() of
+        false ->
+            case Win of 
+                nil -> nil;
+                _ ->
+                    encurses:erase(Win),
+                    encurses:delwin(Win),
+                    nil
+            end;
+        true -> 
+            draw_menu(Win, ru_menu:get_lines())
+    end.
+
+draw_menu(nil, Text) ->
+    Win = create_menu(Text),
+    draw_menu(Win, Text);
+draw_menu(Win, Text) ->
+    encurses:border(Win, ?WINDOW_BORDERS),
+    Print = fun(Elem, Acc) ->
+        encurses:mvwaddstr(Win, 1, Acc, Elem),
+        Acc + 1
+    end,
+    lists:foldl(Print, 1, Text),
+    encurses:refresh(Win),
+    Win.
+
+create_menu(Text) ->
+    Width = menu_text_width(Text) + 2,
+    Height = menu_text_height(Text) + 2,
+    {CX,CY} = ru_util:centering_coords(Width, Height),
+    encurses:curs_set(?CURS_INVISIBLE),
+    Win = encurses:newwin(Width, Height, CX, CY),
+    encurses:refresh(Win),
+    Win.
+
 create_world(Height, MaxX) ->
     encurses:curs_set(?CURS_INVISIBLE),
     Win = encurses:newwin(MaxX, Height, 0, 0),
     encurses:refresh(Win),
     Win.
-
-draw_console(nil, Height, MaxX, MaxY) ->
-    Win = create_console(Height, MaxX, MaxY),
-    draw_console(Win, Height, MaxX),
-    draw_stats(Win, MaxX),
-    encurses:refresh(Win),
-    Win;
-draw_console(Win, Height, MaxX, MaxY) ->
-    encurses:delwin(Win),
-    encurses:erase(Win),
-    draw_console(nil, Height, MaxX, MaxY).
 
 create_console(Height, MaxX, MaxY) ->
     encurses:curs_set(?CURS_INVISIBLE),
@@ -264,6 +304,19 @@ draw_pref(Thing) ->
             {10000, $\s}
 
     end.
+
+menu_text_height(Items) ->
+    length(Items).
+
+menu_text_width(Items) ->
+    MaxLen = fun(Elem, Max) ->
+        LenText = length(Elem),
+        case LenText > Max of
+            true -> LenText;
+            false -> Max
+        end
+    end,
+    lists:foldl(MaxLen, 0, Items).
 
 %% ============================================================================
 %% Splash screen stuff

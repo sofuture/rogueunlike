@@ -195,22 +195,24 @@ game_mode(Input, _State) ->
             end;
 
         Action when Action =:= $? ->
-            Win = ru_menu:draw(ru_text:help_menu()),
+            ru_menu:create(ru_text:help_menu()),
             CloseClosure = fun(_,_) ->
-                ru_menu:undraw(Win),
+                ru_menu:clear(),
                 ru:redraw(menu),
                 set_mode(fun game_mode/2)
             end,
+            ru:redraw(menu),
             ?MSG("Opening help... press every key to close"),
             set_mode(CloseClosure);
 
         Action when Action =:= $A ->
-            Win = ru_menu:draw(ru_text:about_menu()),
+            ru_menu:create(ru_text:about_menu()),
             CloseClosure = fun(_,_) ->
-                ru_menu:undraw(Win),
+                ru_menu:clear(),
                 ru:redraw(menu),
                 set_mode(fun game_mode/2)
             end,
+            ru:redraw(menu),
             ?MSG("Opening about... press a key labeled 'Any' to close"),
             set_mode(CloseClosure);
 

@@ -15,44 +15,58 @@
 
 -include("ru.hrl").
 
--export([draw/1,undraw/1]).
+-behaviour(gen_server).
+
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2,
+        code_change/3]).
+
+-export([start_link/0]).
+-export([create/1, clear/0, has_menu/0, get_lines/0]).
+
+-record(state, {curtext=nil}).
 
 %% ============================================================================
-%% Application API
+%% Module API
 %% ============================================================================
 
-draw(Text) ->
-    Width = menu_text_width(Text) + 2,
-    Height = menu_text_height(Text) + 2,
-    {CX,CY} = ru_util:centering_coords(Width, Height),
-    Win = encurses:newwin(Width, Height, CX, CY),
-    encurses:border(Win, ?WINDOW_BORDERS),
-    Print = fun(Elem, Acc) ->
-        encurses:mvwaddstr(Win, 1, Acc, Elem),
-        Acc + 1
-    end,
-    lists:foldl(Print, 1, Text),
-    encurses:refresh(Win),
-    Win.
+start_link() -> 
+    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
-undraw(_Win) ->
-    ru:redraw(menu_close),
+create(Text) ->
+    ?CAST({create, Text}).
+
+clear() ->
+    ?CAST(clear).
+
+has_menu() ->
+    ?CALL(has_menu).
+
+get_lines() ->
+    ?CALL(get_lines).
+
+%% ============================================================================
+%% gen_server Behaviour
+%% ============================================================================
+
+init(_) ->
+    {ok, #state{}}.
+
+handle_call(has_menu, _From, State) ->
+    {reply, State#state.curtext =/= nil, State};
+handle_call(get_lines, _From, State) ->
+    {reply, State#state.curtext, State}.
+
+handle_cast({create, Text}, State) ->
+    {noreply, State#state { curtext=Text }};
+handle_cast(clear, State) ->
+    {noreply, State#state { curtext=nil }}.
+
+handle_info(_Info, State) ->
+    {noreply, State}.
+
+terminate(_Reason, _State) ->
     ok.
 
-%% ============================================================================
-%% Internal Functions
-%% ============================================================================
-
-menu_text_height(Items) ->
-    length(Items).
-
-menu_text_width(Items) ->
-    MaxLen = fun(Elem, Max) ->
-        LenText = length(Elem),
-        case LenText > Max of
-            true -> LenText;
-            false -> Max
-        end
-    end,
-    lists:foldl(MaxLen, 0, Items).
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.
 

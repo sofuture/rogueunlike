@@ -70,8 +70,7 @@ code_change(_OldVsn, State, _Extra) ->
 %% ============================================================================
 
 do_message(State, Message) ->
-    State#state{ lines = [Message | State#state.lines]}.
+    NewState = State#state{ lines = [Message | State#state.lines] },
+    %ru_draw:draw(message),
+    NewState.
 
-%% ============================================================================
-%% Internal Functions
-%% ============================================================================
