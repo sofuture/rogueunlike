@@ -14,4 +14,4 @@ README
 =====
 make run -> profit
 
-make && ./run.escript -> profit
+make && ./rogueunlike -> profit
