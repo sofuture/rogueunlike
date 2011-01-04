@@ -16,6 +16,6 @@ clean-deps:
 	@rm -rf deps
 
 run: all
-	@./run.escript
+	@./rogueunlike
 
 force: ;
