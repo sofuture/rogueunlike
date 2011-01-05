@@ -22,7 +22,17 @@
 %% ============================================================================
 
 dog_brain(Event, Me) ->
-    case Event of 
+    case Event of
+        attack ->
+            {MyLoc, _} = ru_world:mob_location(Me#mob.ref),
+            HeroLoc = ru_world:hero_location(),
+            {CX,CY} = MyLoc#world.loc,
+            Dir = random_direction(),
+            case ru_state:move(Me#mob.ref, Dir) of
+                error -> 
+                    ru_state:move(Me#mob.ref, random_direction());
+                ok -> ok
+            end;
         tick ->
             {MyLoc, _} = ru_world:mob_location(Me#mob.ref),
             HeroLoc = ru_world:hero_location(),

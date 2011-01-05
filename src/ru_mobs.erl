@@ -21,7 +21,7 @@
         code_change/3]).
 
 -export([start_link/0]).
--export([tick/0, add/1, update/1]).
+-export([tick/0, add/1, update/1, attack/1]).
 
 %% ============================================================================
 %% Module API
@@ -39,6 +39,9 @@ add(Mob) when is_record(Mob, mob) ->
 update(#mob{} = Mob) ->
     ?CALL({update, Mob}).
 
+attack(#mob{} = Mob) ->
+    ?CAST({attack, Mob}).
+
 %% ============================================================================
 %% gen_server Behaviour
 %% ============================================================================
@@ -53,6 +56,9 @@ handle_call({add, Mob}, _From, State) ->
 handle_call({update, Mob}, _From, State) ->
     {reply, ok, update_mob(Mob, State)}.
 
+handle_cast({attack, Mob}, State) ->
+    attack_mob(Mob, State),
+    {noreply, State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
@@ -84,3 +90,17 @@ update_mob(Mob, State) ->
     OtherFilter = fun(Elem) -> Elem#mob.ref =/= MobRef end,
     Others = lists:filter(OtherFilter, State),
     [Mob | Others].
+
+attack_mob(Mob, []) ->
+    ok;
+attack_mob(Mob, [Head | Tail]) ->
+    Ref = Mob#mob.ref,
+    case Head#mob.ref of
+        Ref ->
+            case Head#mob.func of
+                nil -> ok;
+                F -> F(attack, Head)
+            end;
+        _ ->
+            attack_mob(Mob, Tail)
+    end.
