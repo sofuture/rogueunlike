@@ -18,4 +18,7 @@ clean-deps:
 run: all
 	@./rogueunlike
 
+debug: all
+	@gdb escript --args escript rogueunlike
+
 force: ;
