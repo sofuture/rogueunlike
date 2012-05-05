@@ -16,9 +16,9 @@ clean-deps:
 	@rm -rf deps
 
 run: all
-	@./rogueunlike
+	@./run_rul
 
 debug: all
-	@gdb escript --args escript rogueunlike
+	@gdb escript --args escript run_rul
 
 force: ;
