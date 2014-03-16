@@ -91,7 +91,7 @@ wait_to_die() ->
 do_start_stuff() ->
     make_hero(),
     ?MSG("Press q to quit!"),
-    ru_input:set_mode({ru_input, game_mode}),
+    ru_input:set_mode(fun ru_input:game_mode/2),
     ru_world:init_world(6),
     ru_world:database_test(),
     ru_state:add_hero({1,1}),
