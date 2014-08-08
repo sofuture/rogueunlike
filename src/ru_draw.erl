@@ -3,7 +3,7 @@
 %%
 %% Copyright 2010 Jeff Zellner
 %%
-%% This software is provided with absolutely no assurances, guarantees, 
+%% This software is provided with absolutely no assurances, guarantees,
 %% promises or assertions whatsoever.
 %%
 %% Do what thou wilt shall be the whole of the law.
@@ -80,7 +80,7 @@ code_change(_OldVsn, State, _Extra) ->
 %% ============================================================================
 %% Internal Functions
 %% ============================================================================
-    
+
 do_init() ->
     encurses:initscr(),
     encurses:keypad(0, true),
@@ -98,7 +98,7 @@ do_draw(State) ->
     {ConsWin, ConsHeight} = {State#state.conswin, State#state.consheight},
     {WorldWin, WorldHeight} = {State#state.worldwin, MaxY - ConsHeight},
     MenuWin = State#state.menuwin,
-    State#state{ 
+    State#state{
         conswidth = MaxX,
         worldwin = draw_world(WorldWin, WorldHeight, MaxX),
         conswin = draw_console(ConsWin, ConsHeight, MaxX, MaxY),
@@ -127,14 +127,14 @@ draw_console(Win, Height, MaxX, _MaxY) ->
 draw_menu(Win) ->
     case ru_menu:has_menu() of
         false ->
-            case Win of 
+            case Win of
                 nil -> nil;
                 _ ->
                     encurses:erase(Win),
                     encurses:delwin(Win),
                     nil
             end;
-        true -> 
+        true ->
             draw_menu(Win, ru_menu:get_lines())
     end.
 
@@ -241,7 +241,7 @@ square_char(Stuff) ->
 
 draw_pref(Thing) ->
     case Thing of
-        
+
         %% mobs
         hero ->
             {0, $@};
@@ -258,13 +258,13 @@ draw_pref(Thing) ->
             end;
 
         %% stuff
-        fountain -> 
+        fountain ->
             {1000, $U};
         opendoor ->
             {1001, $|};
 
         %% infrastructureystuff
-        walkable -> 
+        walkable ->
             {4000, $\s};
         door ->
             {5000, $+};
@@ -277,8 +277,8 @@ draw_pref(Thing) ->
             {6000, ?ACS_LLCORNER};
         wall_lrcorner ->
             {6000, ?ACS_LRCORNER};
-        
-        wall_cross -> 
+
+        wall_cross ->
             {6000, ?ACS_PLUS};
 
         wall_ttee ->
@@ -297,7 +297,7 @@ draw_pref(Thing) ->
 
         wall ->
             {6001, $#};
-        wall_floating -> 
+        wall_floating ->
             {6001, $#};
 
         _ ->
@@ -325,7 +325,7 @@ menu_text_width(Items) ->
 spiral(X,Y, DX, DY, MinX, MinY, MaxX, MaxY, Acc) ->
     encurses:mvaddch(X,Y,?ACS_CKBOARD),
     Acc1 = case Acc of
-        5 -> 
+        5 ->
             timer:sleep(1),
             encurses:refresh(),
             0;
@@ -352,12 +352,13 @@ fade_in_title(Title) ->
         [{length(Acc), Char} | Acc]
     end,
     Mapped = lists:foldl(MapChars, [], Title),
+    ?MSG(Title),
     Draw = fun({X, Char}) ->
         encurses:move(CX+X, CY-2),
         encurses:vline($\s, 5),
         encurses:mvaddch(CX+X, CY, Char),
         encurses:refresh(),
-        timer:sleep(10)
+        timer:sleep(100)
     end,
     random:seed(now()),
     Randomize = fun(_,_) ->
@@ -365,18 +366,23 @@ fade_in_title(Title) ->
     end,
     lists:foreach(Draw, lists:sort(Randomize, Mapped)).
 
+titleize(Title) ->
+    Space = fun(A, Acc) -> string:concat(Acc, string:concat([A], " ")) end,
+    lists:foldl(Space, " ", Title).
+
 do_splash_screen() ->
     encurses:erase(),
     encurses:curs_set(?CURS_INVISIBLE),
     {MX,MY} = ru_util:get_window_dimensions(),
     spiral(0, 0, 1, 0, 0, 0, MX-1, MY-1, 0),
     encurses:refresh(),
-    fade_in_title(" R O G U E U N L I K E "),
+    Title = titleize("ROGUEUNLIKE"),
+    fade_in_title(Title),
     Me = self(),
     ru_input:set_mode(fun(_,_) -> Me ! ok end),
     receive
         ok -> ok
-    after 
+    after
         2000 -> ok
     end,
     encurses:erase(),
