@@ -3,7 +3,7 @@
 %%
 %% Copyright 2010 Jeff Zellner
 %%
-%% This software is provided with absolutely no assurances, guarantees, 
+%% This software is provided with absolutely no assurances, guarantees,
 %% promises or assertions whatsoever.
 %%
 %% Do what thou wilt shall be the whole of the law.
@@ -29,7 +29,7 @@ dog_brain(Event, Me) ->
             {CX,CY} = MyLoc#world.loc,
             Dir = random_direction(),
             case ru_state:move(Me#mob.ref, Dir) of
-                error -> 
+                error ->
                     ru_state:move(Me#mob.ref, random_direction());
                 ok -> ok
             end;
@@ -59,7 +59,7 @@ dog_brain(Event, Me) ->
                 {HX, HY} -> ru_state:move(Me#mob.ref, random_direction(Dir));
                 _ ->
                     case ru_state:move(Me#mob.ref, Dir) of
-                        error -> 
+                        error ->
                             ru_state:move(Me#mob.ref, random_direction());
                         ok -> ok
                     end
@@ -69,7 +69,7 @@ dog_brain(Event, Me) ->
     ru:redraw(brain).
 
 zombie_brain(Event, Me) ->
-    case Event of 
+    case Event of
         tick ->
             random:seed(now()),
             {MyLoc, _} = ru_world:mob_location(Me#mob.ref),
@@ -92,10 +92,10 @@ zombie_brain(Event, Me) ->
                 %% meander if close to hero
                 Distance >= 7 ->
                     case random:uniform(2) of
-                        1 -> 
+                        1 ->
                             DoMove = false,
                             Dir = nil;
-                        2 -> 
+                        2 ->
                             DoMove = true,
                             Dir = random_direction()
                     end
@@ -108,7 +108,7 @@ zombie_brain(Event, Me) ->
                         {HX, HY} -> ru_state:move(Me#mob.ref, random_direction(Dir));
                         _ ->
                             case ru_state:move(Me#mob.ref, Dir) of
-                                error -> 
+                                error ->
                                     ru_state:move(Me#mob.ref, random_direction());
                                 ok -> ok
                             end

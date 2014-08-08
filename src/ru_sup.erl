@@ -3,7 +3,7 @@
 %%
 %% Copyright 2010 Jeff Zellner
 %%
-%% This software is provided with absolutely no assurances, guarantees, 
+%% This software is provided with absolutely no assurances, guarantees,
 %% promises or assertions whatsoever.
 %%
 %% Do what thou wilt shall be the whole of the law.
@@ -34,7 +34,7 @@ init([]) ->
     StateServer = ?RUWORKER(ru_state),
     DrawServer = ?RUWORKER(ru_draw),
     MenuServer = ?RUWORKER(ru_menu),
-    Children = [MainServer, MobsServer, CharServer, ConsoleServer, 
+    Children = [MainServer, MobsServer, CharServer, ConsoleServer,
         InputServer, WorldServer, StateServer, DrawServer, MenuServer],
     RestartStrategy = {one_for_one, 2, 10},
     {ok, {RestartStrategy, Children}}.

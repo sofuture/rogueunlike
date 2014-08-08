@@ -3,7 +3,7 @@
 %%
 %% Copyright 2010 Jeff Zellner
 %%
-%% This software is provided with absolutely no assurances, guarantees, 
+%% This software is provided with absolutely no assurances, guarantees,
 %% promises or assertions whatsoever.
 %%
 %% Do what thou wilt shall be the whole of the law.
@@ -86,7 +86,7 @@ terminate(_Reason, _State) ->
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
-    
+
 %% ============================================================================
 %% Internal Functions
 %% ============================================================================
@@ -115,7 +115,7 @@ get_world_square(Loc) ->
     Square.
 
 find_hero() ->
-    Q = qlc:q([X || 
+    Q = qlc:q([X ||
         X = #world{stuff=Stuff} <- mnesia:table(world),
         proplists:get_bool(hero, Stuff)]),
     F = fun() -> qlc:eval(Q) end,
@@ -139,7 +139,7 @@ find_mob(MobRef) ->
         end]),
     F = fun() -> qlc:eval(Q) end,
     case mnesia:transaction(F) of
-        {atomic, [Square]} -> 
+        {atomic, [Square]} ->
             [Mob] = lists:filter(FindMe, Square#world.stuff),
             {Square, Mob};
         _ -> nil
@@ -153,7 +153,7 @@ save_square(Square) ->
 square_has(Square, mob) ->
     FindMob = fun(Elem) -> is_record(Elem, mob) end,
     lists:any(FindMob, Square#world.stuff);
-square_has(Square, Thing) when is_record(Thing, mob) 
+square_has(Square, Thing) when is_record(Thing, mob)
         andalso is_record(Square, world) ->
     FindMe = fun(Elem) -> Thing#mob.ref =:= Elem#mob.ref end,
     lists:any(FindMe, Square#world.stuff);
@@ -193,10 +193,10 @@ save_squares(Squares) ->
 %% ============================================================================
 
 init_db() ->
-    case is_fresh_startup() of 
-        true -> 
+    case is_fresh_startup() of
+        true ->
             case mnesia:system_info(is_running) of
-                yes -> 
+                yes ->
                     error_logger:tty(false),
                     mnesia:stop(),
                     error_logger:tty(true);
@@ -204,7 +204,7 @@ init_db() ->
             end,
             mnesia:create_schema(node()),
             mnesia:start(),
-            mnesia:create_table(world, 
+            mnesia:create_table(world,
                 [{disc_copies, []}, {attributes, record_info(fields, world)}]);
         {exists, Tables} ->
             ok = mnesia:wait_for_tables(Tables, 20000)
@@ -247,7 +247,7 @@ grid(X, Y, I, J, Type) ->
     grid(X + 1, Y, I - 1, J, Type).
 
 room_with_door(X, Y, I, J, {DoorX, DoorY}) ->
-    [#world{loc={DoorX, DoorY}, stuff=[door]} | 
+    [#world{loc={DoorX, DoorY}, stuff=[door]} |
         [World || World <- room(X, Y, I, J),
             World#world.loc /= {DoorX, DoorY}]].
 
@@ -269,7 +269,7 @@ room(X, Y, I, J) ->
 has_top([]) -> false;
 has_top([Head|T]) ->
     case Head of
-        Wall when Wall =:= wall_llcorner orelse Wall =:= wall_lrcorner 
+        Wall when Wall =:= wall_llcorner orelse Wall =:= wall_lrcorner
             orelse Wall =:= wall_cross orelse Wall =:= wall_btee
             orelse Wall =:= wall_ltee orelse Wall =:= wall_rtee
             orelse Wall =:= wall_vline -> true;
@@ -279,7 +279,7 @@ has_top([Head|T]) ->
 has_right([]) -> false;
 has_right([Head|T]) ->
     case Head of
-        Wall when Wall =:= wall_ulcorner orelse Wall =:= wall_llcorner 
+        Wall when Wall =:= wall_ulcorner orelse Wall =:= wall_llcorner
             orelse Wall =:= wall_cross orelse Wall =:= wall_ttee
             orelse Wall =:= wall_btee orelse Wall =:= wall_ltee
             orelse Wall =:= wall_hline -> true;
@@ -289,7 +289,7 @@ has_right([Head|T]) ->
 has_bottom([]) -> false;
 has_bottom([Head|T]) ->
     case Head of
-        Wall when Wall =:= wall_ulcorner orelse Wall =:= wall_urcorner 
+        Wall when Wall =:= wall_ulcorner orelse Wall =:= wall_urcorner
             orelse Wall =:= wall_cross orelse Wall =:= wall_ttee
             orelse Wall =:= wall_ltee orelse Wall =:= wall_rtee
             orelse Wall =:= wall_vline ->
@@ -300,7 +300,7 @@ has_bottom([Head|T]) ->
 has_left([]) -> false;
 has_left([Head|T]) ->
     case Head of
-        Wall when Wall =:= wall_urcorner orelse Wall =:= wall_lrcorner 
+        Wall when Wall =:= wall_urcorner orelse Wall =:= wall_lrcorner
             orelse Wall =:= wall_cross orelse Wall =:= wall_ttee
             orelse Wall =:= wall_btee orelse Wall =:= wall_rtee
             orelse Wall =:= wall_hline ->

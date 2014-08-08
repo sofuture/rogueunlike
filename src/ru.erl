@@ -3,7 +3,7 @@
 %%
 %% Copyright 2010 Jeff Zellner
 %%
-%% This software is provided with absolutely no assurances, guarantees, 
+%% This software is provided with absolutely no assurances, guarantees,
 %% promises or assertions whatsoever.
 %%
 %% Do what thou wilt shall be the whole of the law.
@@ -111,15 +111,15 @@ do_redraw(Reason) ->
     ok.
 
 make_hero() ->
-    Char = #cstats{ 
-        name = "Gravlax", 
-        gender = male, 
+    Char = #cstats{
+        name = "Gravlax",
+        gender = male,
         race = "Troll",
-        level = 1, 
-        gold = 100, 
-        hp = 20, 
+        level = 1,
+        gold = 100,
+        hp = 20,
         hpmax = 20,
-        attributes = #cattributes { 
+        attributes = #cattributes {
             strength = 10,
             dexterity = 7,
             constitution = 5,

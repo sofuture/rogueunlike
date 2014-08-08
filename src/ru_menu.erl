@@ -3,7 +3,7 @@
 %%
 %% Copyright 2010 Jeff Zellner
 %%
-%% This software is provided with absolutely no assurances, guarantees, 
+%% This software is provided with absolutely no assurances, guarantees,
 %% promises or assertions whatsoever.
 %%
 %% Do what thou wilt shall be the whole of the law.
@@ -29,7 +29,7 @@
 %% Module API
 %% ============================================================================
 
-start_link() -> 
+start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 create(Text) ->

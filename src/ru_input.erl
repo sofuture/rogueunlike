@@ -3,7 +3,7 @@
 %%
 %% Copyright 2010 Jeff Zellner
 %%
-%% This software is provided with absolutely no assurances, guarantees, 
+%% This software is provided with absolutely no assurances, guarantees,
 %% promises or assertions whatsoever.
 %%
 %% Do what thou wilt shall be the whole of the law.
@@ -96,35 +96,35 @@ parse_direction(Char) ->
         259 -> kp_n;
         $k -> kp_n;
         $8 -> kp_n;
-        
+
         339 -> kp_ne;
         $u -> kp_ne;
         $9 -> kp_ne;
-        
+
         260 -> kp_w;
         $h -> kp_w;
         $4 -> kp_w;
-        
+
         350 -> kp_center;
         $. -> kp_center;
         $5 -> kp_center;
-        
+
         261 -> kp_e;
         $l -> kp_e;
         $6 -> kp_e;
-        
+
         360 -> kp_sw;
         $b -> kp_sw;
         $1 -> kp_sw;
-        
+
         258 -> kp_s;
         $j -> kp_s;
         $2 -> kp_s;
-        
+
         338 -> kp_se;
         $n -> kp_se;
         $3 -> kp_se;
-        
+
         Other -> Other
     end.
 
@@ -142,7 +142,7 @@ attack_cmd_mode(Input, _State) ->
     DirInput = parse_direction(Input),
     case DirInput of
         Dir when ?ISDIR(Dir) ->
-            case ru_state:attack(hero, Dir) of 
+            case ru_state:attack(hero, Dir) of
                 ok -> ?MSG("Bam! Bang! Crash!");
                 nomob -> ?MSG("Woosh.");
                 nil -> ok
@@ -156,7 +156,7 @@ close_cmd_mode(Input, _State) ->
     DirInput = parse_direction(Input),
     case DirInput of
         Dir when ?ISDIR(Dir) ->
-            case ru_state:close_door(Dir) of 
+            case ru_state:close_door(Dir) of
                 ok -> ?MSG("The door slams shut.");
                 nodoor -> ?MSG("Ain't nothin' to close there!");
                 error -> ?MSG("Try as you might, it won't close.")
@@ -189,7 +189,7 @@ game_mode(Input, _State) ->
         Dir when ?ISDIR(Dir) ->
             case Dir of
                 kp_center -> ru:tick();
-                _ -> 
+                _ ->
                     ru_state:move(hero, Dir),
                     ru:tick()
             end;
@@ -216,7 +216,7 @@ game_mode(Input, _State) ->
             ?MSG("Opening about... press a key labeled 'Any' to close"),
             set_mode(CloseClosure);
 
-        DirectedAction when 
+        DirectedAction when
                 DirectedAction =:= $o orelse
                 DirectedAction =:= $c orelse
                 DirectedAction =:= $a ->

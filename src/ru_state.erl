@@ -3,7 +3,7 @@
 %%
 %% Copyright 2010 Jeff Zellner
 %%
-%% This software is provided with absolutely no assurances, guarantees, 
+%% This software is provided with absolutely no assurances, guarantees,
 %% promises or assertions whatsoever.
 %%
 %% Do what thou wilt shall be the whole of the law.
@@ -101,7 +101,7 @@ do_add_hero(Location) ->
 do_add_mob(Type, Location, Func) ->
     Square = ?GET(Location),
     Ref = erlang:make_ref(),
-    Mob = #mob{type=Type, ref=Ref, func=Func}, 
+    Mob = #mob{type=Type, ref=Ref, func=Func},
     ru_mobs:add(Mob),
     ?SAVE(?ADD(Square, Mob)),
     ok.
@@ -112,7 +112,7 @@ do_move(Ref, Direction) when is_reference(Ref) ->
             {DX, DY} = ru_util:direction_coords(Current#world.loc, Direction),
             Square = ?GET({DX,DY}),
             Res = case ?HAS(Square, walkable) of
-                true -> 
+                true ->
                     ?SAVE(?ADD(Square, Mob)),
                     ?SAVE(?SUB(Current, Mob)),
                     ok;
@@ -121,7 +121,7 @@ do_move(Ref, Direction) when is_reference(Ref) ->
             end,
             ru:redraw(move),
             Res;
-        nil -> 
+        nil ->
             ok
     end;
 do_move(hero, Direction) ->
@@ -139,7 +139,7 @@ do_move(hero, Direction) ->
                             do_attack(hero, Direction);
                         false ->
                             Res = case ?HAS(Square, walkable) of
-                                true -> 
+                                true ->
                                     ?SAVE(?ADD(Square, hero)),
                                     ?SAVE(?SUB(Current, hero)),
                                     ok;
@@ -197,7 +197,7 @@ do_rest_of_attack(Who, Current, Direction) ->
     case Current of
         nil -> ok;
         _ ->
-            {DX, DY} = ru_util:direction_coords(Current#world.loc, Direction),            
+            {DX, DY} = ru_util:direction_coords(Current#world.loc, Direction),
             Square = ?GET({DX,DY}),
             FindMob = fun(Elem) -> is_record(Elem, mob) end,
             Mobs = lists:filter(FindMob, Square#world.stuff),

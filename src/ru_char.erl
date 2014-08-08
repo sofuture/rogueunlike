@@ -3,7 +3,7 @@
 %%
 %% Copyright 2010 Jeff Zellner
 %%
-%% This software is provided with absolutely no assurances, guarantees, 
+%% This software is provided with absolutely no assurances, guarantees,
 %% promises or assertions whatsoever.
 %%
 %% Do what thou wilt shall be the whole of the law.
@@ -95,7 +95,7 @@ do_remove_item(Char, Item) ->
     case lists:member(Item, Inv) of
         true ->
             NotItem = fun(Elem) -> Elem =/= Item end,
-            {Char#cstats{ inventory = 
+            {Char#cstats{ inventory =
                     lists:filter(NotItem, Char#cstats.inventory) }, ok};
         _ -> {Char, notfound}
     end.
